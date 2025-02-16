@@ -1,10 +1,11 @@
 import json
 import os
+from typing import Any, Dict, List
 
 from src.prodact_catalog.data_loader import load_categories, logger
 
 
-def main() -> list:
+def main() -> List[Dict[str, Any]]:
     """
     Основная функция для загрузки категорий и продуктов из JSON-файла
     и сохранения информации о них в новый JSON-файл.
@@ -28,20 +29,20 @@ def main() -> list:
         logger.error(f"Ошибка при загрузке JSON: {e}")
         return []
 
-    result = []
+    result: List[Dict[str, Any]] = []
     if categories:
         for category in categories:
-            category_info = {
+            category_info: Dict[str, Any] = {
                 "name": category.name,
                 "description": category.description,
-                "products": []
+                "products": [],  # Явно указываем, что это список
             }
             if category.products:
                 for product in category.products:
-                    product_info = {
+                    product_info: Dict[str, Any] = {
                         "name": product.name,
                         "price": product.price,
-                        "quantity": product.quantity
+                        "quantity": product.quantity,
                     }
                     category_info["products"].append(product_info)
             else:
@@ -49,15 +50,12 @@ def main() -> list:
 
             result.append(category_info)
 
-        # Сохранение результата в JSON-файл в корне проекта
-        output_file_path = os.path.join(os.path.dirname(__file__), "..", "..", "output_categories.json")
-        with open(output_file_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=4)
+    # Сохранение результата в JSON-файл в корне проекта
+    output_file_path = os.path.join(os.path.dirname(__file__), "..", "..", "output_categories.json")
+    with open(output_file_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=4)
 
-        print(f"Данные успешно сохранены в {output_file_path}")
-    else:
-        logger.warning("Не удалось загрузить категории из файла.")
-
+    print(f"Данные успешно сохранены в {output_file_path}")
     return result
 
 
