@@ -1,4 +1,4 @@
-from src.prodact_catalog.models import Product, Category
+from src.prodact_catalog.models import Category, Product
 
 
 def test_product_initialization(product):
@@ -7,21 +7,27 @@ def test_product_initialization(product):
     assert product.price == 9.99
     assert product.quantity == 100
 
+
 def test_category_initialization(category):
     assert category.name == "Тестовая категория"
     assert category.description == "Это тестовая категория."
     assert category.products == []
     assert Category.total_categories == 1
 
+
 def test_add_product_to_category(category, product):
     category.add_product(product)
     assert product in category.products
     assert Category.total_products == 1
 
+
 def test_multiple_categories():
-    category1 = Category("Категория 1", "Первая категория.")
-    category2 = Category("Категория 2", "Вторая категория.")
+    Category("Категория 1", "Первая категория.")
+    Category("Категория 2", "Вторая категория.")
+
+    # Проверка, что количество категорий увеличилось
     assert Category.total_categories == 2
+
 
 def test_add_multiple_products(category):
     product1 = Product("Продукт 1", "Описание 1", 10.0, 5)

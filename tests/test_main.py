@@ -1,13 +1,13 @@
 import json
 import os
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
-from src.prodact_catalog.data_loader import load_categories
 from src.prodact_catalog.views import main
-from src.prodact_catalog.models import Category, Product
+
 
 class TestMainFunction(unittest.TestCase):
+
     def setUp(self):
         # Подготовка тестовых данных
         self.test_data = [
@@ -16,14 +16,10 @@ class TestMainFunction(unittest.TestCase):
                 "description": "Description1",
                 "products": [
                     {"name": "Product1", "description": "Description of Product1", "price": 100, "quantity": 10},
-                    {"name": "Product2", "description": "Description of Product2", "price": 200, "quantity": 5}
-                ]
+                    {"name": "Product2", "description": "Description of Product2", "price": 200, "quantity": 5},
+                ],
             },
-            {
-                "name": "Category2",
-                "description": "Description2",
-                "products": []
-            }
+            {"name": "Category2", "description": "Description2", "products": []},
         ]
         self.test_json = json.dumps(self.test_data, ensure_ascii=False, indent=4)
 
@@ -44,14 +40,10 @@ class TestMainFunction(unittest.TestCase):
                 "description": "Description1",
                 "products": [
                     {"name": "Product1", "price": 100, "quantity": 10},
-                    {"name": "Product2", "price": 200, "quantity": 5}
-                ]
+                    {"name": "Product2", "price": 200, "quantity": 5},
+                ],
             },
-            {
-                "name": "Category2",
-                "description": "Description2",
-                "products": []
-            }
+            {"name": "Category2", "description": "Description2", "products": []},
         ]
         self.assertEqual(result, expected_result)
 
@@ -86,23 +78,21 @@ class TestMainFunction(unittest.TestCase):
         # Проверка, что в логах есть предупреждение
         self.assertIn("Ошибка при загрузке JSON:", log.output[0])
 
-    @patch("builtins.open", new_callable=mock_open, read_data=json.dumps([{"name": "Category1", "description": "Description1", "products": []}]))
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data=json.dumps([{"name": "Category1", "description": "Description1", "products": []}]),
+    )
     @patch("os.path.join", return_value="fake_path/products.json")
     def test_main_empty_products(self, mock_join, mock_file):
         # Тест случая, когда категория не содержит продуктов
-        with self.assertLogs(level="WARNING") as log:
-            result = main()
+
+        result = main()
 
         # Проверка, что результат содержит категорию без продуктов
-        expected_result = [
-            {
-                "name": "Category1",
-                "description": "Description1",
-                "products": []
-            }
-        ]
+        expected_result = [{"name": "Category1", "description": "Description1", "products": []}]
         self.assertEqual(result, expected_result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
