@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 
 from src.prodact_catalog.data_loader import load_categories, logger
 
-
 def main() -> List[Dict[str, Any]]:
     """
     Основная функция для загрузки категорий и продуктов из JSON-файла
@@ -20,11 +19,12 @@ def main() -> List[Dict[str, Any]]:
     # Укажите путь к вашему JSON-файлу
     file_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "products.json")
 
-    try:
-        categories = load_categories(file_path)
-    except FileNotFoundError:
+    if not os.path.exists(file_path):
         logger.error(f"Файл не найден: {file_path}")
         return []
+
+    try:
+        categories = load_categories(file_path)
     except json.JSONDecodeError as e:
         logger.error(f"Ошибка при загрузке JSON: {e}")
         return []
@@ -57,7 +57,6 @@ def main() -> List[Dict[str, Any]]:
 
     print(f"Данные успешно сохранены в {output_file_path}")
     return result
-
 
 if __name__ == "__main__":
     categories_data = main()

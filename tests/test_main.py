@@ -5,7 +5,6 @@ from unittest.mock import mock_open, patch
 
 from src.prodact_catalog.views import main
 
-
 class TestMainFunction(unittest.TestCase):
 
     def setUp(self):
@@ -25,10 +24,10 @@ class TestMainFunction(unittest.TestCase):
 
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
-    @patch("os.path.join", return_value="fake_path/products.json")
-    def test_main_success(self, mock_join, mock_exists, mock_file):
-        # Установка данных для mock_open
-        mock_file.return_value.read.return_value = self.test_json
+    @patch("src.prodact_catalog.data_loader.load_categories")
+    def test_main_success(self, mock_load_categories, mock_exists, mock_file):
+        # Установка возвращаемых данных для mock_load_categories
+        mock_load_categories.return_value = json.loads(self.test_json)
 
         # Тест успешного выполнения функции
         result = main()
@@ -51,31 +50,31 @@ class TestMainFunction(unittest.TestCase):
         output_file_path = os.path.join(os.path.dirname(__file__), "..", "..", "output_categories.json")
         mock_file.assert_any_call(output_file_path, "w", encoding="utf-8")
 
-    @patch("builtins.open", side_effect=FileNotFoundError)
+    @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=False)
     @patch("os.path.join", return_value="fake_path/products.json")
     def test_main_file_not_found(self, mock_join, mock_exists, mock_file):
         # Тест случая, когда файл не найден
-        with self.assertLogs(level="ERROR") as log:
+        with self.assertLogs('src.prodact_catalog.views.logger', level="ERROR") as log:
             result = main()
 
         # Проверка, что результат пуст
         self.assertEqual(result, [])
 
-        # Проверка, что в логах есть предупреждение
+        # Проверка, что в логах есть сообщение об ошибке
         self.assertIn("Файл не найден: fake_path/products.json", log.output[0])
 
     @patch("builtins.open", new_callable=mock_open, read_data="invalid_json")
     @patch("os.path.join", return_value="fake_path/products.json")
     def test_main_invalid_json(self, mock_join, mock_file):
         # Тест случая, когда JSON некорректен
-        with self.assertLogs(level="ERROR") as log:
+        with self.assertLogs('src.prodact_catalog.views.logger', level="ERROR") as log:
             result = main()
 
         # Проверка, что результат пуст
         self.assertEqual(result, [])
 
-        # Проверка, что в логах есть предупреждение
+        # Проверка, что в логах есть сообщение об ошибке
         self.assertIn("Ошибка при загрузке JSON:", log.output[0])
 
     @patch(
@@ -86,13 +85,11 @@ class TestMainFunction(unittest.TestCase):
     @patch("os.path.join", return_value="fake_path/products.json")
     def test_main_empty_products(self, mock_join, mock_file):
         # Тест случая, когда категория не содержит продуктов
-
         result = main()
 
         # Проверка, что результат содержит категорию без продуктов
         expected_result = [{"name": "Category1", "description": "Description1", "products": []}]
         self.assertEqual(result, expected_result)
-
 
 if __name__ == "__main__":
     unittest.main()
