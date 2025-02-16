@@ -1,9 +1,11 @@
 import json
 import logging
 from typing import List
-from .models import Product, Category
+
+from .models import Category, Product
 
 logger = logging.getLogger(__name__)
+
 
 def load_categories(file_path: str) -> List[Category]:
     """
@@ -24,13 +26,13 @@ def load_categories(file_path: str) -> List[Category]:
             categories = []
             for category_data in data:
                 try:
-                    category = Category(category_data['name'], category_data['description'])
-                    for product_data in category_data.get('products', []):
+                    category = Category(category_data["name"], category_data["description"])
+                    for product_data in category_data.get("products", []):
                         product = Product(
-                            product_data['name'],
-                            product_data.get('description', ''),  # Используем пустую строку по умолчанию
-                            product_data['price'],
-                            product_data['quantity']
+                            product_data["name"],
+                            product_data.get("description", ""),  # Используем пустую строку по умолчанию
+                            product_data["price"],
+                            product_data["quantity"],
                         )
                         category.add_product(product)
                     categories.append(category)
