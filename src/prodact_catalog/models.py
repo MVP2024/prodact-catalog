@@ -1,5 +1,6 @@
 from typing import List
 
+
 class Product:
     """Класс, представляющий продукт."""
 
@@ -16,6 +17,7 @@ class Product:
         self.description = description
         self.price = price
         self.quantity = quantity
+
 
 class Category:
     """Класс, представляющий категорию продуктов."""
