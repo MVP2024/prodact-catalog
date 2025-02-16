@@ -1,6 +1,7 @@
-from src.prodact_catalog.data_loader import load_categories
-import os
 import logging
+import os
+
+from src.prodact_catalog.data_loader import load_categories
 
 logging.basicConfig(level=logging.DEBUG)
 
