@@ -2,31 +2,28 @@ import json
 import os
 from typing import Any, Dict, List
 
-from src.prodact_catalog.data_loader import load_categories, logger
+from src.prodact_catalog.data_loader import load_categories
+from src.prodact_catalog.logger import setup_logger
+
+logger = setup_logger(__name__)
+
 
 def main() -> List[Dict[str, Any]]:
-    """
-    Основная функция для загрузки категорий и продуктов из JSON-файла
-    и сохранения информации о них в новый JSON-файл.
+    logger.info("Запуск функции main.")
 
-    Эта функция формирует путь к файлу JSON, загружает категории с помощью
-    функции `load_categories`, а затем сохраняет информацию о каждой категории
-    и ее продуктах в новый JSON-файл. Если категории не загружаются, записывается предупреждение
-    в журнал.
-
-    :return: Список категорий и продуктов.
-    """
-    # Укажите путь к вашему JSON-файлу
     file_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "products.json")
+    logger.debug(f"Проверка существования файла: {file_path}")
 
     if not os.path.exists(file_path):
         logger.error(f"Файл не найден: {file_path}")
         return []
 
     try:
+        logger.info("Попытка загрузки категорий из файла...")
         categories = load_categories(file_path)
     except json.JSONDecodeError as e:
         logger.error(f"Ошибка при загрузке JSON: {e}")
+        print("Caught JSONDecodeError")  # Отладочное сообщение
         return []
 
     result: List[Dict[str, Any]] = []
@@ -35,7 +32,7 @@ def main() -> List[Dict[str, Any]]:
             category_info: Dict[str, Any] = {
                 "name": category.name,
                 "description": category.description,
-                "products": [],  # Явно указываем, что это список
+                "products": [],
             }
             if category.products:
                 for product in category.products:
@@ -46,17 +43,19 @@ def main() -> List[Dict[str, Any]]:
                     }
                     category_info["products"].append(product_info)
             else:
-                logger.warning(f"Категория '{category.name}' не содержит продуктов.")  # Логируем пустую категорию
+                logger.warning(f"Категория '{category.name}' не содержит продуктов.")
+                print(f"Категория '{category.name}' не содержит продуктов.")  # Отладочное сообщение
 
             result.append(category_info)
 
-    # Сохранение результата в JSON-файл в корне проекта
     output_file_path = os.path.join(os.path.dirname(__file__), "..", "..", "output_categories.json")
     with open(output_file_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
 
+    logger.info(f"Данные успешно сохранены в {output_file_path}")
     print(f"Данные успешно сохранены в {output_file_path}")
     return result
+
 
 if __name__ == "__main__":
     categories_data = main()
