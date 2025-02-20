@@ -4,17 +4,19 @@ from src.prodact_catalog.models import Category, Product
 
 
 @pytest.fixture(autouse=True)
-def reset_category_counts():
-    # Сброс статических переменных перед каждым тестом
-    Category.total_categories = 0
-    Category.total_products = 0
+def reset_category_counts() -> None:
+    """Сброс статических счетчиков перед каждым тестом."""
+    Category.category_count = 0
+    Category.product_count = 0
 
 
 @pytest.fixture
-def product():
+def product() -> Product:
+    """Фикстура для создания тестового продукта."""
     return Product("Тестовый продукт", "Это тестовый продукт.", 9.99, 100)
 
 
 @pytest.fixture
-def category():
+def category() -> Category:
+    """Фикстура для создания тестовой категории."""
     return Category("Тестовая категория", "Это тестовая категория.")
