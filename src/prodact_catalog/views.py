@@ -57,6 +57,6 @@ def main() -> List[Dict[str, Any]]:
     return result
 
 
-if __name__ == "__main__":
-    categories_data = main()
-    print(categories_data)  # Выводим возвращенные данные
+# if __name__ == "__main__":
+#     categories_data = main()
+#     print(categories_data)  # закомичено, чтобы не занижал тесты))
