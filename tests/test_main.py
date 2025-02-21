@@ -1,19 +1,13 @@
-import json
-import os
-from typing import Any, Dict, List
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, mock_open, patch
 
 from src.logger import setup_logger
-from src.models import Category, Product
 from src.main import main
-from src.data_loader import load_categories
+from src.models import Category, Product
 
 
 class TestMainFunction(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # Настройка логгера и сброс статических счетчиков
         self.logger = setup_logger(__name__)
         Category._product_count = 0
@@ -52,9 +46,7 @@ class TestMainFunction(unittest.TestCase):
 
     @patch("src.main.logger")
     @patch("os.path.exists", return_value=False)
-    def test_main_file_not_found(
-        self, mock_exists: MagicMock, mock_logger: MagicMock
-    ) -> None:
+    def test_main_file_not_found(self, mock_exists: MagicMock, mock_logger: MagicMock) -> None:
         # Тест на отсутствие файла
         result = main()
         mock_logger.error.assert_called_once()
@@ -125,6 +117,4 @@ class TestMainFunction(unittest.TestCase):
         main()
 
         # Проверяем, что файл открыт на запись с правильной кодировкой
-        mock_file.assert_called_with(
-            unittest.mock.ANY, "w", encoding="utf-8"
-        )
+        mock_file.assert_called_with(unittest.mock.ANY, "w", encoding="utf-8")

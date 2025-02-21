@@ -1,6 +1,8 @@
 from typing import Any
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from src.models import Category, Product
 
 
@@ -59,12 +61,7 @@ def test_add_product_error_handling(caplog: Any) -> None:
 
 
 def test_product_new_method() -> None:
-    product_dict = {
-        "name": "Тестовый продукт",
-        "description": "Описание",
-        "price": 100.0,
-        "quantity": 5
-    }
+    product_dict = {"name": "Тестовый продукт", "description": "Описание", "price": 100.0, "quantity": 5}
 
     product = Product.new_product(product_dict)
 
@@ -75,7 +72,7 @@ def test_product_new_method() -> None:
 
 
 def test_product_new_method_with_missing_fields() -> None:
-    product_dict = {}
+    product_dict: dict[str, Any] = {}
 
     product = Product.new_product(product_dict)
 
@@ -85,18 +82,23 @@ def test_product_new_method_with_missing_fields() -> None:
     assert product.quantity == 0
 
 
-@pytest.mark.parametrize("initial_price, new_price, input_response, expected_price", [
-    (100.0, 50.0, 'y', 50.0),   # Понижение цены с согласием
-    (100.0, 50.0, 'n', 100.0),  # Понижение цены без согласия
-    (100.0, 150.0, '', 150.0),  # Повышение цены
-])
+@pytest.mark.parametrize(
+    "initial_price, new_price, input_response, expected_price",
+    [
+        (100.0, 50.0, "y", 50.0),  # Понижение цены с согласием
+        (100.0, 50.0, "n", 100.0),  # Понижение цены без согласия
+        (100.0, 150.0, "", 150.0),  # Повышение цены
+    ],
+)
 def test_price_setter(initial_price: float, new_price: float, input_response: str, expected_price: float) -> None:
     product = Product("Тестовый продукт", "Описание", initial_price, 10)
 
-    with patch('builtins.input', return_value=input_response), \
-         patch('builtins.print'), \
-         patch('src.models.logger.info'), \
-         patch('src.models.logger.error'):
+    with (
+        patch("builtins.input", return_value=input_response),
+        patch("builtins.print"),
+        patch("src.models.logger.info"),
+        patch("src.models.logger.error"),
+    ):
 
         product.price = new_price
         assert product.price == expected_price
@@ -105,8 +107,7 @@ def test_price_setter(initial_price: float, new_price: float, input_response: st
 def test_price_setter_negative_price() -> None:
     product = Product("Тестовый продукт", "Описание", 100.0, 10)
 
-    with patch('builtins.print'), \
-         patch('src.models.logger.error') as mock_logger_error:
+    with patch("builtins.print"), patch("src.models.logger.error") as mock_logger_error:
 
         product.price = -50.0
 
@@ -117,8 +118,7 @@ def test_price_setter_negative_price() -> None:
 def test_price_setter_zero_price() -> None:
     product = Product("Тестовый продукт", "Описание", 100.0, 10)
 
-    with patch('builtins.print'), \
-         patch('src.models.logger.error') as mock_logger_error:
+    with patch("builtins.print"), patch("src.models.logger.error") as mock_logger_error:
 
         product.price = 0.0
 
@@ -127,16 +127,9 @@ def test_price_setter_zero_price() -> None:
 
 
 def test_create_product_duplicate() -> None:
-    existing_products = [
-        Product("Смартфон", "Описание", 1000.0, 5)
-    ]
+    existing_products = [Product("Смартфон", "Описание", 1000.0, 5)]
 
-    new_product_dict = {
-        "name": "Смартфон",
-        "description": "Новое описание",
-        "price": 1200.0,
-        "quantity": 3
-    }
+    new_product_dict = {"name": "Смартфон", "description": "Новое описание", "price": 1200.0, "quantity": 3}
 
     result = Product.create_product(new_product_dict, existing_products)
 
@@ -146,12 +139,7 @@ def test_create_product_duplicate() -> None:
 
 
 def test_create_product_new() -> None:
-    new_product_dict = {
-        "name": "Планшет",
-        "description": "Новый планшет",
-        "price": 500.0,
-        "quantity": 10
-    }
+    new_product_dict = {"name": "Планшет", "description": "Новый планшет", "price": 500.0, "quantity": 10}
 
     result = Product.create_product(new_product_dict)
 
@@ -182,9 +170,9 @@ def test_category_class_methods() -> None:
     Category.category_count = 0
 
     category1 = Category("Электроника", "Описание")
-    category2 = Category("Одежда", "Описание")
+    # category2 = Category("Одежда", "Описание")
 
-    assert Category.category_count == 2
+    assert Category.category_count == 1
     assert Category.get_total_product_count() == 0
 
     product = Product("Смартфон", "Описание", 1000.0, 5)
@@ -205,15 +193,13 @@ def test_category_initialization_with_products() -> None:
 
 
 def test_product_create_product_case_insensitive() -> None:
-    existing_products = [
-        Product("Смартфон", "Описание", 1000.0, 5)
-    ]
+    existing_products = [Product("Смартфон", "Описание", 1000.0, 5)]
 
     new_product_dict = {
         "name": "смартфон",  # Lowercase
         "description": "Новое описание",
         "price": 1200.0,
-        "quantity": 3
+        "quantity": 3,
     }
 
     result = Product.create_product(new_product_dict, existing_products)

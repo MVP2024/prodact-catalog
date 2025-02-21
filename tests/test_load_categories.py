@@ -1,8 +1,7 @@
 import json
-import pytest
 from unittest.mock import MagicMock, mock_open, patch
+
 from src.data_loader import load_categories
-from src.models import Category, Product
 
 
 class TestLoadCategories:
@@ -94,7 +93,7 @@ class TestLoadCategories:
                 "products": [
                     {"name": "Футболка", "price": 100.0, "quantity": 20},
                 ],
-            }
+            },
         ]
 
         with patch("builtins.open", mock_open(read_data=json.dumps(data))):
