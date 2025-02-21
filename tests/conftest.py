@@ -1,13 +1,13 @@
 import pytest
 
-from src.prodact_catalog.models import Category, Product
+from src.models import Category, Product
 
 
 @pytest.fixture(autouse=True)
 def reset_category_counts() -> None:
     """Сброс статических счетчиков перед каждым тестом."""
+    Category._product_count = 0
     Category.category_count = 0
-    Category.product_count = 0
 
 
 @pytest.fixture

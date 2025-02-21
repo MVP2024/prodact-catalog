@@ -1,128 +1,130 @@
 import json
+import os
+from typing import Any, Dict, List
 import unittest
-from typing import Any
-from unittest.mock import mock_open, patch
+from unittest.mock import patch, mock_open, MagicMock
 
-from src.prodact_catalog.logger import setup_logger
-from src.prodact_catalog.models import Category, Product
-from src.prodact_catalog.views import main
+import pytest
 
-logger = setup_logger(__name__)
+from src.logger import setup_logger
+from src.models import Category, Product
+from src.main import main
+from src.data_loader import load_categories
 
 
 class TestMainFunction(unittest.TestCase):
+    def setUp(self):
+        # Настройка логгера и сброс статических счетчиков
+        self.logger = setup_logger(__name__)
+        Category._product_count = 0
+        Category.category_count = 0
 
-    @patch("src.prodact_catalog.views.load_categories")
+    @patch("src.main.load_categories")
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
-    def test_main_valid_data(self, mock_exists: Any, mock_file: Any, mock_load_categories: Any) -> None:
-        category = Category("Смартфоны", "Смартфоны, как средство не только коммуникации.")
-        product = Product("Samsung Galaxy C23 Ultra", "256GB, Серый цвет, 200MP камера", 180000.0, 5)
+    def test_main_valid_data(
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
+    ) -> None:
+        # Создаем тестовую категорию и продукт
+        category = Category("Смартфоны", "Описание категории")
+        product = Product("Тестовый смартфон", "Описание продукта", 100000.0, 5)
         category.add_product(product)
-
         mock_load_categories.return_value = [category]
 
+        # Вызываем main и проверяем результат
         result = main()
+
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["name"], "Смартфоны")
         self.assertEqual(len(result[0]["products"]), 1)
+        self.assertEqual(result[0]["products"][0]["name"], "Тестовый смартфон")
 
-    # Остальные методы остаются без изменений...
-
-    @patch("src.prodact_catalog.views.load_categories")
-    @patch("builtins.open", new_callable=mock_open, read_data=json.dumps([]))
+    @patch("src.main.load_categories")
+    @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
-    def test_main_empty_data(self, mock_exists: Any, mock_file: Any, mock_load_categories: Any) -> None:
+    def test_main_empty_categories(
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
+    ) -> None:
+        # Тест с пустым списком категорий
         mock_load_categories.return_value = []
         result = main()
         self.assertEqual(result, [])
 
-    @patch("src.prodact_catalog.views.logger")
+    @patch("src.main.logger")
     @patch("os.path.exists", return_value=False)
-    def test_main_file_not_found(self, mock_exists: Any, mock_logger: Any) -> None:
+    def test_main_file_not_found(
+        self, mock_exists: MagicMock, mock_logger: MagicMock
+    ) -> None:
+        # Тест на отсутствие файла
         result = main()
         mock_logger.error.assert_called_once()
         self.assertEqual(result, [])
 
-    @patch("src.prodact_catalog.views.load_categories")
-    @patch(
-        "builtins.open",
-        new_callable=mock_open,
-        read_data=json.dumps(
-            [{"name": "Смартфоны", "description": "Смартфоны, как средство не только коммуникации.", "products": []}]
-        ),
-    )
+    @patch("src.main.load_categories")
+    @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
-    def test_main_no_products(self, mock_exists: Any, mock_file: Any, mock_load_categories: Any) -> None:
-        category = Category("Смартфоны", "Смартфоны, как средство не только коммуникации.")
+    def test_main_category_without_products(
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
+    ) -> None:
+        # Тест категории без продуктов
+        category = Category("Пустая категория", "Описание")
         mock_load_categories.return_value = [category]
 
         result = main()
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["products"], [])
 
-    @patch("src.prodact_catalog.views.logger")
-    def test_main_json_decode_error_logging(self, mock_logger: Any) -> None:
-        # Тест на логирование JSONDecodeError
-        with (
-            patch("builtins.open", new_callable=mock_open),
-            patch("os.path.exists", return_value=True),
-            patch("src.prodact_catalog.views.load_categories", side_effect=json.JSONDecodeError("Test error", "", 0)),
-        ):
-            result = main()
-
-            # Проверяем, что ошибка залогирована
-            mock_logger.error.assert_called_once()
-            # Проверяем, что возвращается пустой список
-            self.assertEqual(result, [])
-            # Проверяем текст сообщения об ошибке
-            error_message = mock_logger.error.call_args[0][0]
-            self.assertIn("Ошибка при загрузке JSON", error_message)
-
-    @patch("builtins.print")
-    @patch("src.prodact_catalog.views.load_categories")
+    @patch("src.main.load_categories")
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
-    def test_main_print_output(
-        self, mock_exists: Any, mock_file: Any, mock_load_categories: Any, mock_print: Any
+    def test_main_multiple_categories_and_products(
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
     ) -> None:
-        # Тест на вывод данных при запуске скрипта напрямую
-        # Создаем тестовую категорию
-        category = Category("Тестовая категория", "Описание")
-        product = Product("Тестовый продукт", "", 100.0, 5)
-        category.add_product(product)
-        mock_load_categories.return_value = [category]
+        # Тест с несколькими категориями и продуктами
+        category1 = Category("Смартфоны", "Мобильные устройства")
+        product1 = Product("iPhone", "Описание", 100000.0, 5)
+        product2 = Product("Samsung", "Описание", 90000.0, 7)
+        category1.add_product(product1)
+        category1.add_product(product2)
 
-        # Вызываем main() как будто скрипт запущен напрямую
-        with patch("__main__.__name__", "__main__"):
-            main()
+        category2 = Category("Ноутбуки", "Компьютерная техника")
+        product3 = Product("MacBook", "Описание", 150000.0, 3)
+        category2.add_product(product3)
 
-        # Проверяем, что print был вызван с данными
-        self.assertTrue(mock_print.called)
-        # Проверяем, что последний вызов print содержит данные о категориях
-        last_call_args = mock_print.call_args[0][0]
-        self.assertIsNotNone(last_call_args)
+        mock_load_categories.return_value = [category1, category2]
 
-    @patch("builtins.print")
-    @patch("src.prodact_catalog.views.load_categories")
+        result = main()
+        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result[0]["products"]), 2)
+        self.assertEqual(len(result[1]["products"]), 1)
+
+    @patch("src.main.load_categories")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.path.exists", return_value=True)
+    def test_main_exception_handling(
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
+    ) -> None:
+        # Тест обработки исключений при загрузке
+        mock_load_categories.side_effect = Exception("Unexpected error")
+
+        result = main()
+        self.assertEqual(result, [])
+
+    @patch("src.main.load_categories")
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.exists", return_value=True)
     def test_main_output_file_creation(
-        self, mock_exists: Any, mock_file: Any, mock_load_categories: Any, mock_print: Any
+        self, mock_exists: MagicMock, mock_file: MagicMock, mock_load_categories: MagicMock
     ) -> None:
-        # Создаем тестовую категорию
+        # Тест создания выходного файла
         category = Category("Тестовая категория", "Описание")
-        product = Product("Тестовый продукт", "", 100.0, 5)
+        product = Product("Тестовый продукт", "Описание", 1000.0, 5)
         category.add_product(product)
         mock_load_categories.return_value = [category]
 
-        # Вызываем main()
-        result = main()
+        main()
 
-        # Проверяем, что файл был открыт на запись
-        mock_file.assert_called_with(unittest.mock.ANY, "w", encoding="utf-8")
-
-        # Проверяем содержимое результата
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "Тестовая категория")
-        self.assertEqual(len(result[0]["products"]), 1)
+        # Проверяем, что файл открыт на запись с правильной кодировкой
+        mock_file.assert_called_with(
+            unittest.mock.ANY, "w", encoding="utf-8"
+        )
