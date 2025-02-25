@@ -43,6 +43,10 @@ class Product:
             logger.error("Цена не должна быть нулевая или отрицательная")
             return
 
+        # Если цена не изменилась, не выполняем никаких действий
+        if value == self._price:
+            return
+
         # Проверка на понижение цены
         if value < self._price:
             confirmation = (
@@ -56,6 +60,7 @@ class Product:
 
         # Если все проверки пройдены, устанавливаем новую цену
         self._price = value
+        logger.info(f"Цена обновлена до {value}")
         logger.info(f"Цена обновлена до {value}")
 
     # Магические методы представления
@@ -100,7 +105,6 @@ class Product:
         return self.price * self.quantity + other.price * other.quantity
 
     # Классовые методы создания продуктов
-    @classmethod
     @classmethod
     def new_product(cls, product_dict: Dict[str, Any]) -> "Product":
         """
