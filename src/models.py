@@ -23,6 +23,7 @@ class Product:
         self._price = price
         self.quantity = quantity
 
+    # Свойства и сеттеры
     @property
     def price(self) -> float:
         """Геттер для цены."""
@@ -57,6 +58,49 @@ class Product:
         self._price = value
         logger.info(f"Цена обновлена до {value}")
 
+    # Магические методы представления
+    def __str__(self) -> str:
+        """
+        Строковое представление продукта.
+
+        Returns:
+            str: Строка с информацией о продукте в формате
+            "Название продукта, цена руб. Остаток: количество шт."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __repr__(self) -> str:
+        """
+        Создает строковое представление продукта.
+
+        Возвращает подробную информацию о продукте в формате:
+        "Название, цена руб. Остаток: количество шт."
+
+        Returns:
+            str: Строка с информацией о продукте
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other: "Product") -> float:
+        """
+        Метод сложения двух продуктов, возвращающий общую стоимость товаров на складе.
+
+        Args:
+            other (Product): Второй продукт для сложения.
+
+        Returns:
+            float: Общая стоимость товаров на складе (цена * количество).
+
+        Raises:
+            TypeError: Если аргумент не является экземпляром Product.
+        """
+        if not isinstance(other, Product):
+            raise TypeError(f"Unsupported operand type for +: '{type(self).__name__}' and '{type(other).__name__}'")
+
+        return self.price * self.quantity + other.price * other.quantity
+
+    # Классовые методы создания продуктов
+    @classmethod
     @classmethod
     def new_product(cls, product_dict: Dict[str, Any]) -> "Product":
         """
@@ -69,10 +113,14 @@ class Product:
             Product: Новый объект продукта.
         """
         return cls(
-            name=product_dict.get("name", ""),
-            description=product_dict.get("description", ""),
-            price=product_dict.get("price", 0.0),
-            quantity=product_dict.get("quantity", 0),
+            name=str(product_dict.get("name", "")) if product_dict.get("name") is not None else "",
+            description=str(product_dict.get("description", "")) if product_dict.get("description") is not None else "",
+            price=float(product_dict.get("price", 0.0))
+                if isinstance(product_dict.get("price"), (int, float))
+                else 0.0,
+            quantity=int(product_dict.get("quantity", 0))
+                if isinstance(product_dict.get("quantity"), (int, float))
+                else 0
         )
 
     @classmethod
@@ -118,31 +166,69 @@ class Product:
         return new_product
 
 
+class CategoryIterator:
+    """
+    Итератор для перебора товаров в категории.
+
+    Attributes:
+        _category (Category): Категория, товары которой будут перебираться.
+        _index (int): Текущий индекс при итерации.
+    """
+
+    def __init__(self, category: "Category"):
+        """
+        Инициализация итератора для категории.
+
+        Args:
+            category (Category): Категория, товары которой будут перебираться.
+        """
+        self._category = category
+        self._index = 0
+
+    def __iter__(self) -> "CategoryIterator":
+        """
+        Возвращает сам объект итератора.
+
+        Returns:
+            CategoryIterator: Текущий итератор.
+        """
+        return self
+
+    def __next__(self) -> "Product":
+        """
+        Возвращает следующий товар в категории.
+
+        Returns:
+            Product: Следующий товар.
+
+        Raises:
+            StopIteration: Когда товары в категории закончились.
+        """
+        if self._index < len(self._category.products):
+            product = self._category.products[self._index]
+            self._index += 1
+            return product
+
+        raise StopIteration
+
+
 class Category:
     """Класс, представляющий категорию продуктов."""
 
+    # Статические атрибуты
     category_count = 0
-    _product_count = 0  # Приватный атрибут для подсчета продуктов
+    _product_count = 0
 
-    # def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
-    #     self.name = name
-    #     self.description = description
-    #     self._products: List[Product] = []
-    #
-    #     # Логируем создание категории один раз
-    #     logger.info(f"Создана новая категория: {name}")
-    #
-    #     # Увеличиваем счетчик категорий один раз
-    #     Category.category_count += 1
-    #
-    #     # Добавляем продукты, если они переданы
-    #     if products:
-    #         for product in products:
-    #             self.add_product(product)
-    #
-    #     # Логируем количество продуктов в категории
-    #     logger.debug(f"Количество продуктов в категории '{name}': {len(self._products)}")
+    # Магический метод инициализации
     def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
+        """
+        Инициализирует категорию с заданными атрибутами.
+
+        Args:
+            name (str): Название категории.
+            description (str): Описание категории.
+            products (Optional[List[Product]], optional): Список продуктов в категории.
+        """
         self.name = name
         self.description = description
         self._products: List[Product] = []
@@ -156,8 +242,17 @@ class Category:
                 logger.debug(f"Добавляю продукт: {product.name}")
                 self.add_product(product)
 
+    # Методы работы с продуктами
     def add_product(self, product: Product) -> None:
-        # Проверяем, что передан корректный объект Product
+        """
+        Добавляет продукт в категорию.
+
+        Args:
+            product (Product): Продукт для добавления.
+
+        Raises:
+            ValueError: Если продукт None или возникла ошибка при добавлении.
+        """
         if product is None:
             error_msg = f"Ошибка при добавлении продукта None в категорию '{self.name}'"
             logger.error(error_msg)
@@ -166,15 +261,34 @@ class Category:
         try:
             self._products.append(product)
             Category._product_count += 1
-
-            # Логируем добавление продукта
             logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
         except Exception as e:
-            # Логируем ошибку при добавлении продукта
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
+    # Магические методы
+    def __iter__(self) -> "CategoryIterator":
+        """
+        Возвращает итератор для перебора товаров в категории.
+
+        Returns:
+            CategoryIterator: Итератор товаров категории.
+        """
+        return CategoryIterator(self)
+
+    def __str__(self) -> str:
+        """
+        Строковое представление категории.
+
+        Returns:
+            str: Строка с информацией о категории в формате
+            "Название категории, количество товаров: X шт."
+        """
+        total_quantity = sum(product.quantity for product in self._products)
+        return f"{self.name}, количество товаров: {total_quantity} шт."
+
+    # Свойства
     @property
     def products(self) -> List[Product]:
         """
@@ -192,12 +306,29 @@ class Category:
 
         Returns:
             int: Количество продуктов в категории.
-            Также логирует информацию о количестве продуктов.
         """
         product_count = len(self._products)
         logger.debug(f"Количество продуктов в категории '{self.name}': {product_count}")
         return product_count
 
+    @property
+    def product_list(self) -> str:
+        """
+        Геттер для получения списка продуктов в виде строки.
+
+        Returns:
+            str: Строка с описанием продуктов в категории.
+        """
+        if not self._products:
+            return "В категории нет товаров"
+
+        product_descriptions = [
+            f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт."
+            for product in self._products
+        ]
+        return "\n".join(product_descriptions)
+
+    # Классовые методы
     @classmethod
     def get_total_product_count(cls) -> int:
         """
