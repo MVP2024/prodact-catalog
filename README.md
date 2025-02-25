@@ -47,6 +47,12 @@ Product Catalog - это мощный инструмент управления 
     electronics = Category("Электроника", "Современные электронные устройства")
     electronics.add_product(smartphone)
    ```
+    # Итерация по продуктам в категории
+```
+    for product in electronics:
+    print(product)
+```    
+
 
 ### Управление ценами
 ```
