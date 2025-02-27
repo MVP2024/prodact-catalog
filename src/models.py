@@ -117,14 +117,16 @@ class Product:
             Product: Новый объект продукта.
         """
         return cls(
-            name=str(product_dict.get("name", "")) if product_dict.get("name") is not None else "",
-            description=str(product_dict.get("description", "")) if product_dict.get("description") is not None else "",
-            price=float(product_dict.get("price", 0.0))
-                if isinstance(product_dict.get("price"), (int, float))
-                else 0.0,
-            quantity=int(product_dict.get("quantity", 0))
-                if isinstance(product_dict.get("quantity"), (int, float))
-                else 0
+            name=(str(product_dict.get("name", "")) if product_dict.get("name") is not None else ""),
+            description=(
+                str(product_dict.get("description", "")) if product_dict.get("description") is not None else ""
+            ),
+            price=(
+                float(product_dict.get("price", 0.0)) if isinstance(product_dict.get("price"), (int, float)) else 0.0
+            ),
+            quantity=(
+                int(product_dict.get("quantity", 0)) if isinstance(product_dict.get("quantity"), (int, float)) else 0
+            ),
         )
 
     @classmethod
@@ -327,8 +329,7 @@ class Category:
             return "В категории нет товаров"
 
         product_descriptions = [
-            f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт."
-            for product in self._products
+            f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт." for product in self._products
         ]
         return "\n".join(product_descriptions)
 
@@ -342,20 +343,3 @@ class Category:
             int: Общее количество продуктов.
         """
         return cls._product_count
-
-    @property
-    def product_list(self) -> str:
-        """
-        Геттер для получения списка продуктов в виде строки.
-
-        Returns:
-            str: Строка с описанием продуктов в категории.
-        """
-        if not self._products:
-            return "В категории нет товаров"
-
-        product_descriptions = []
-        for product in self._products:
-            product_descriptions.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
-
-        return "\n".join(product_descriptions)
