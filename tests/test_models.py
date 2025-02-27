@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 
 import pytest
 
@@ -13,7 +13,7 @@ def test_product_price_setter_with_same_price() -> None:
     with (
         patch("builtins.input", return_value="n"),
         patch("builtins.print"),
-        patch("src.models.logger.info") as mock_logger_info
+        patch("src.models.logger.info") as mock_logger_info,
     ):
         # Не вызывает логирование при установке той же цены
         product.price = 100.0
@@ -46,6 +46,7 @@ def test_category_duplicate_product_list_property() -> None:
     expected_list = "Смартфон, 1000.0 руб. Остаток: 5 шт.\nПланшет, 500.0 руб. Остаток: 3 шт."
     assert first_list == expected_list
 
+
 def test_price_setter_with_zero_price() -> None:
     """Тест установки нулевой цены."""
     product = Product("Тестовый продукт", "Описание", 100.0, 10)
@@ -53,12 +54,13 @@ def test_price_setter_with_zero_price() -> None:
     with (
         patch("builtins.input", return_value="n"),
         patch("builtins.print"),
-        patch("src.models.logger.error") as mock_logger_error
+        patch("src.models.logger.error") as mock_logger_error,
     ):
         product.price = 0.0
 
         mock_logger_error.assert_called_once_with("Цена не должна быть нулевая или отрицательная")
         assert product.price == 100.0
+
 
 def test_price_setter_with_negative_price() -> None:
     """Тест установки отрицательной цены."""
@@ -67,12 +69,13 @@ def test_price_setter_with_negative_price() -> None:
     with (
         patch("builtins.input", return_value="n"),
         patch("builtins.print"),
-        patch("src.models.logger.error") as mock_logger_error
+        patch("src.models.logger.error") as mock_logger_error,
     ):
         product.price = -50.0
 
         mock_logger_error.assert_called_once_with("Цена не должна быть нулевая или отрицательная")
         assert product.price == 100.0
+
 
 def test_price_setter_with_lower_price_cancellation() -> None:
     """Тест отмены понижения цены пользователем."""
@@ -81,7 +84,7 @@ def test_price_setter_with_lower_price_cancellation() -> None:
     with (
         patch("builtins.input", return_value="n"),  # Пользователь отказывается от понижения
         patch("builtins.print") as mock_print,
-        patch("src.models.logger.info") as mock_logger_info
+        patch("src.models.logger.info") as mock_logger_info,
     ):
         product.price = 50.0  # Попытка понизить цену
 
@@ -92,7 +95,8 @@ def test_price_setter_with_lower_price_cancellation() -> None:
         mock_print.assert_called_once_with("Понижение цены отменено.")
 
         # Проверяем логирование отмены с текущей ценой
-        mock_logger_info.assert_called_once_with(f"Понижение цены отменено. Текущая цена: 100.0")
+        mock_logger_info.assert_called_once_with("Понижение цены отменено. Текущая цена: 100.0")
+
 
 def test_create_product_with_none_list() -> None:
     """Тест создания продукта со списком None."""
@@ -105,6 +109,7 @@ def test_create_product_with_none_list() -> None:
     assert result.price == 500.0
     assert result.quantity == 10
 
+
 def test_create_product_with_existing_product() -> None:
     """Тест обновления существующего продукта."""
     existing_products = [Product("Смартфон", "Описание", 1000.0, 5)]
@@ -116,17 +121,20 @@ def test_create_product_with_existing_product() -> None:
     assert result.price == 1200.0
     assert result.quantity == 8
 
+
 def test_category_str_method_with_no_products() -> None:
     """Проверка строкового представления категории без продуктов."""
     category = Category("Пустая категория", "Описание")
 
     assert str(category) == "Пустая категория, количество товаров: 0 шт."
 
+
 def test_category_product_count_with_no_products() -> None:
     """Проверка подсчета количества продуктов в пустой категории."""
     category = Category("Пустая категория", "Описание")
 
     assert category.product_count == 0
+
 
 def test_category_product_list_with_no_products() -> None:
     """Проверка списка продуктов в пустой категории."""
@@ -135,11 +143,11 @@ def test_category_product_list_with_no_products() -> None:
     assert category.product_list == "В категории нет товаров"
 
 
-
 def test_product_str_method() -> None:
     """Тест строкового представления продукта."""
     product = Product("Тестовый продукт", "Описание", 100.0, 10)
     assert str(product) == "Тестовый продукт, 100.0 руб. Остаток: 10 шт."
+
 
 def test_product_repr_method() -> None:
     """Тест представления продукта для отладки."""
@@ -177,7 +185,7 @@ def test_add_method_type_error_message() -> None:
     product = Product("Смартфон", "Описание", 1000.0, 5)
 
     with pytest.raises(TypeError) as excinfo:
-        product + "Некорректный тип"
+        product + "Некорректный тип"  # type: ignore
 
     assert "Unsupported operand type" in str(excinfo.value)
 
@@ -237,11 +245,8 @@ def test_product_initialization(product: Product) -> None:
 def test_category_initialization_logging() -> None:
     """Тест логирования при инициализации категории с продуктами."""
     with patch("src.models.logger.debug") as mock_logger_debug:
-        products = [
-            Product("Смартфон", "Описание", 1000.0, 5),
-            Product("Планшет", "Описание", 500.0, 3)
-        ]
-        category = Category("Электроника", "Описание", products)
+        products = [Product("Смартфон", "Описание", 1000.0, 5), Product("Планшет", "Описание", 500.0, 3)]
+        Category("Электроника", "Описание", products)
 
         # Проверяем вызовы debug с количеством продуктов и их именами
         assert mock_logger_debug.call_count == 3
@@ -249,18 +254,20 @@ def test_category_initialization_logging() -> None:
         mock_logger_debug.assert_any_call(f"Добавляю продукт: {products[0].name}")
         mock_logger_debug.assert_any_call(f"Добавляю продукт: {products[1].name}")
 
+
 def test_category_initialization_with_empty_products_list() -> None:
     """Тест инициализации категории с пустым списком продуктов."""
     with patch("src.models.logger.debug") as mock_logger_debug:
-        category = Category("Электроника", "Описание", [])
+        Category("Электроника", "Описание", [])
 
         # Проверяем, что debug не вызывался
         mock_logger_debug.assert_not_called()
 
+
 def test_category_initialization_with_none_products() -> None:
     """Тест инициализации категории без продуктов."""
     with patch("src.models.logger.debug") as mock_logger_debug:
-        category = Category("Электроника", "Описание")
+        Category("Электроника", "Описание")
 
         # Проверяем, что debug не вызывался
         mock_logger_debug.assert_not_called()
@@ -346,6 +353,8 @@ def test_product_new_method_invalid_types() -> None:
     assert str(product.name) == "123"  # Преобразование числа в строку
     assert str(product.description) == "456"  # Преобразование числа в строку
     assert product.price == 0.0  # Некорректная цена заменена на 0.0
+
+
 def test_product_new_method_with_mixed_none_and_valid_values() -> None:
     """Тест создания продукта со смешанными значениями None и валидными."""
     product_dict = {"name": None, "description": "Описание", "price": 100.0, "quantity": None}
@@ -356,6 +365,7 @@ def test_product_new_method_with_mixed_none_and_valid_values() -> None:
     assert product.description == "Описание"
     assert product.price == 100.0
     assert product.quantity == 0
+
 
 def test_product_new_method_with_partial_none_values() -> None:
     """Тест создания продукта с частично None значениями."""
@@ -380,6 +390,7 @@ def test_category_iterator_empty_iteration() -> None:
 
     assert iteration_count == 0
 
+
 def test_add_method_with_zero_quantity_products() -> None:
     """Проверка метода сложения продуктов с нулевым количеством."""
     product1 = Product("Продукт 1", "Описание", 50.0, 0)
@@ -388,6 +399,7 @@ def test_add_method_with_zero_quantity_products() -> None:
     total_value = product1 + product2
 
     assert total_value == 0.0
+
 
 def test_category_product_list_edge_cases() -> None:
     """Проверка краевых случаев списка продуктов."""
