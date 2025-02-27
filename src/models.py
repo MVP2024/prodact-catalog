@@ -117,6 +117,11 @@ class Product:
         Raises:
             TypeError: Если аргумент не является экземпляром Product.
         """
+        if other is None:
+            error_msg = "Операция сложения невозможна с None"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
         if not isinstance(other, Product):
             error_msg = f"Нельзя складывать товары разных типов: '{type(self).__name__}' и '{type(other).__name__}'"
             logger.error(error_msg)
@@ -288,26 +293,17 @@ class Category:
 
     # Методы работы с продуктами
     def add_product(self, product: Product) -> None:
-        """
-        Добавляет продукт в категорию.
+        # Сначала проверяем на None
+        if product is None:
+            error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}'"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
-        Args:
-            product (Product): Продукт для добавления.
-
-        Raises:
-            TypeError: Если объект не является экземпляром Product или его подклассов.
-            ValueError: Если продукт None или возникла ошибка при добавлении.
-        """
-        # Проверяем, явдяется ли объект экземпляром Product или его подклассов.
+        # Затем проверяем на тип
         if not isinstance(product, Product):
             error_msg = f"В категорию можно добавлять только продукты. Получен объект типа: {type(product).__name__}"
             logger.error(error_msg)
             raise TypeError(error_msg)
-
-        if product is None:
-            error_msg = f"Ошибка при добавлении продукта None в категорию '{self.name}'"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
 
         try:
             self._products.append(product)
@@ -317,6 +313,7 @@ class Category:
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
             logger.error(error_msg)
             raise ValueError(error_msg)
+
 
     # Магические методы
     def __iter__(self) -> "CategoryIterator":
