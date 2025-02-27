@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.models import Category, Product, Smartphone, LawnGrass
+from src.models import Category, LawnGrass, Product, Smartphone
 
 
 def test_product_price_setter_with_same_price() -> None:
@@ -29,7 +29,6 @@ def test_product_add_method_with_none_product() -> None:
 
     with pytest.raises(TypeError, match="Операция сложения невозможна с None"):
         product + None  # type: ignore
-
 
 
 def test_category_duplicate_product_list_property() -> None:
@@ -302,7 +301,7 @@ def test_add_product_error_handling(caplog: Any) -> None:
     category = Category("Электроника", "Описание")
 
     with pytest.raises(ValueError):
-        category.add_product(None)  # type: ignore
+        category.add_product(None)
 
     assert "Ошибка при добавлении продукта" in caplog.text
     assert len(category.products) == 0
@@ -435,7 +434,7 @@ def test_smartphone_initialization() -> None:
         efficiency=0.9,
         model="Pro Max",
         memory=256,
-        color="Silver"
+        color="Silver",
     )
 
     assert smartphone.name == "iPhone 13"
@@ -458,7 +457,7 @@ def test_smartphone_add_method() -> None:
         efficiency=0.9,
         model="Pro Max",
         memory=256,
-        color="Silver"
+        color="Silver",
     )
     smartphone2 = Smartphone(
         name="Samsung Galaxy",
@@ -468,12 +467,150 @@ def test_smartphone_add_method() -> None:
         efficiency=0.8,
         model="S21",
         memory=128,
-        color="Black"
+        color="Black",
     )
 
     total_value = smartphone1 + smartphone2
     expected_value = 1000.0 * 5 * 0.9 + 800.0 * 3 * 0.8
     assert total_value == expected_value
+
+
+def test_smartphone_str_method() -> None:
+    """Тест строкового представления смартфона."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Новый смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+
+    assert str(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
+
+
+def test_smartphone_repr_method() -> None:
+    """Тест представления смартфона для отладки."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Новый смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+
+    assert repr(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
+
+
+def test_lawn_grass_initialization() -> None:
+    """Тест инициализации газонной травы с полными данными."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава 'Западлютик'",
+        description="Ароматная трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    assert lawn_grass.name == "Газонная трава 'Западлютик'"
+    assert lawn_grass.description == "Ароматная трава"
+    assert lawn_grass.price == 500.0
+    assert lawn_grass.quantity == 10
+    assert lawn_grass.country == "Россия"
+    assert lawn_grass.germination_period == "7-10 дней"
+    assert lawn_grass.color == "Зеленый"
+
+
+def test_lawn_grass_add_method() -> None:
+    """Тест метода сложения для газонной травы."""
+    lawn_grass1 = LawnGrass(
+        name="Газонная трава 'Батька'",
+        description="Быстрорастущая трава 1",
+        price=500.0,
+        quantity=10,
+        country="Беларусь",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+    lawn_grass2 = LawnGrass(
+        name="Газонная трава Премиум",
+        description="Быстрорастущая трава 2",
+        price=600.0,
+        quantity=5,
+        country="Беларусь",
+        germination_period="5-7 дней",
+        color="Темно-зеленый",
+    )
+
+    total_value = lawn_grass1 + lawn_grass2
+    expected_value = 500.0 * 10 + 600.0 * 5
+    assert total_value == expected_value
+
+
+def test_lawn_grass_str_method() -> None:
+    """Тест строкового представления газонной травы."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава для России",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="5-10 дней",
+        color="Зеленый",
+    )
+
+    assert str(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 10 шт."
+
+
+def test_lawn_grass_repr_method() -> None:
+    """Тест представления газонной травы для отладки."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава для России",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    assert repr(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 10 шт."
+
+
+def test_lawn_grass_add_method_different_types() -> None:
+    """Тест сложения газонной травы разных типов."""
+
+    class CustomLawnGrass(LawnGrass):
+        pass
+
+    lawn_grass1 = LawnGrass(
+        name="Газонная трава Элита",
+        description="Быстрорастущая трава 1",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+    custom_lawn_grass = CustomLawnGrass(
+        name="Рандомная трава",
+        description="Рандомная трава",
+        price=400.0,
+        quantity=7,
+        country="Россия",
+        germination_period="10-14 дней",
+        color="Салатовый",
+    )
+
+    with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
+        lawn_grass1 + custom_lawn_grass
 
 
 def test_smartphone_add_method_different_types() -> None:
@@ -490,7 +627,7 @@ def test_smartphone_add_method_different_types() -> None:
         efficiency=0.9,
         model="Pro Max",
         memory=256,
-        color="Silver"
+        color="Silver",
     )
     custom_smartphone = CustomSmartphone(
         name="Custom Phone",
@@ -500,141 +637,93 @@ def test_smartphone_add_method_different_types() -> None:
         efficiency=0.8,
         model="Custom",
         memory=128,
-        color="Black"
+        color="Black",
     )
 
     with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
-        smartphone1 + custom_smartphone  # type: ignore
+        smartphone1 + custom_smartphone
 
 
-def test_smartphone_str_method() -> None:
-    """Тест строкового представления смартфона."""
+def test_add_method_different_product_types() -> None:
+    """Тест сложения продуктов разных классов."""
     smartphone = Smartphone(
         name="iPhone 13",
-        description="Новый смартфон",
+        description="Смартфон",
         price=1000.0,
         quantity=5,
         efficiency=0.9,
         model="Pro Max",
         memory=256,
-        color="Silver"
+        color="Silver",
     )
-
-    assert str(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
-
-
-def test_smartphone_repr_method() -> None:
-    """Тест представления смартфона для отладки."""
-    smartphone = Smartphone(
-        name="iPhone 13",
-        description="Новый смартфон",
-        price=1000.0,
-        quantity=5,
-        efficiency=0.9,
-        model="Pro Max",
-        memory=256,
-        color="Silver"
-    )
-
-    assert repr(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
-
-
-def test_lawn_grass_initialization() -> None:
-    """Тест инициализации газонной травы с полными данными."""
     lawn_grass = LawnGrass(
-        name="Газонная трава Элит",
-        description="Быстрорастущая трава",
+        name="Газонная трава Элита",
+        description="Быстрорастущий бурьян для соседей",
         price=500.0,
         quantity=10,
-        country="Нидерланды",
-        germination_period="7-10 дней",
-        color="Зеленый"
-    )
-
-    assert lawn_grass.name == "Газонная трава Элит"
-    assert lawn_grass.description == "Быстрорастущая трава"
-    assert lawn_grass.price == 500.0
-    assert lawn_grass.quantity == 10
-    assert lawn_grass.country == "Нидерланды"
-    assert lawn_grass.germination_period == "7-10 дней"
-    assert lawn_grass.color == "Зеленый"
-
-def test_lawn_grass_add_method() -> None:
-    """Тест метода сложения для газонной травы."""
-    lawn_grass1 = LawnGrass(
-        name="Газонная трава Элит",
-        description="Быстрорастущая трава 1",
-        price=500.0,
-        quantity=10,
-        country="Нидерланды",
-        germination_period="7-10 дней",
-        color="Зеленый"
-    )
-    lawn_grass2 = LawnGrass(
-        name="Газонная трава Премиум",
-        description="Быстрорастущая трава 2",
-        price=600.0,
-        quantity=5,
-        country="Германия",
-        germination_period="5-7 дней",
-        color="Темно-зеленый"
-    )
-
-    total_value = lawn_grass1 + lawn_grass2
-    expected_value = 500.0 * 10 + 600.0 * 5
-    assert total_value == expected_value
-
-def test_lawn_grass_add_method_different_types() -> None:
-    """Тест сложения газонной травы разных типов."""
-    class CustomLawnGrass(LawnGrass):
-        pass
-
-    lawn_grass1 = LawnGrass(
-        name="Газонная трава Элит",
-        description="Быстрорастущая трава 1",
-        price=500.0,
-        quantity=10,
-        country="Нидерланды",
-        germination_period="7-10 дней",
-        color="Зеленый"
-    )
-    custom_lawn_grass = CustomLawnGrass(
-        name="Кастомная трава",
-        description="Кастомная трава",
-        price=400.0,
-        quantity=7,
         country="Россия",
-        germination_period="10-14 дней",
-        color="Салатовый"
+        germination_period="7-10 дней",
+        color="голубой",
     )
 
     with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
-        lawn_grass1 + custom_lawn_grass  # type: ignore
+        smartphone + lawn_grass
 
-def test_lawn_grass_str_method() -> None:
-    """Тест строкового представления газонной травы."""
+
+def test_add_method_error_message_content() -> None:
+    """Проверка точного содержания сообщения об ошибке."""
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
     lawn_grass = LawnGrass(
-        name="Газонная трава Элит",
+        name="Газонная трава Скороспелка",
         description="Быстрорастущая трава",
         price=500.0,
         quantity=10,
-        country="Нидерланды",
+        country="Белорусь",
         germination_period="7-10 дней",
-        color="Зеленый"
+        color="Зеленый",
     )
 
-    assert str(lawn_grass) == "Газонная трава Элит, 500.0 руб. Остаток: 10 шт."
+    with pytest.raises(TypeError) as excinfo:
+        smartphone1 + lawn_grass
 
-def test_lawn_grass_repr_method() -> None:
-    """Тест представления газонной травы для отладки."""
+    assert str(excinfo.value) == "Нельзя складывать товары разных типов: 'Smartphone' и 'LawnGrass'"
+
+
+def test_add_method_logging() -> None:
+    """Проверка логирования при попытке сложения разных типов."""
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
     lawn_grass = LawnGrass(
-        name="Газонная трава Элит",
-        description="Быстрорастущая трава",
+        name="Газонная трава 'Финн'",
+        description=" медленнорастущая трава",
         price=500.0,
         quantity=10,
-        country="Нидерланды",
+        country="Россия",
         germination_period="7-10 дней",
-        color="Зеленый"
+        color="Зеленый",
     )
 
-    assert repr(lawn_grass) == "Газонная трава Элит, 500.0 руб. Остаток: 10 шт."
+    with patch("src.models.logger.error") as mock_logger_error:
+        with pytest.raises(TypeError):
+            smartphone1 + lawn_grass
+
+        mock_logger_error.assert_called_once_with(
+            f"Нельзя складывать товары разных типов: '{type(smartphone1).__name__}' и '{type(lawn_grass).__name__}'"
+        )
