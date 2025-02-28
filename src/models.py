@@ -59,7 +59,7 @@ class Order(BaseContainer):
     #создание_класса #ABC #abstractmethod
     """
 
-    def __init__(self, name: str, description: str, product: 'Product', quantity: int):
+    def __init__(self, name: str, description: str, product: "Product", quantity: int):
         """
         Инициализация заказа.
 
@@ -145,7 +145,7 @@ class BaseProduct(ABC):
         pass
 
     @abstractmethod
-    def __add__(self, other: 'BaseProduct') -> float:
+    def __add__(self, other: "BaseProduct") -> float:
         """
         Абстрактный метод сложения продуктов.
 
@@ -177,7 +177,7 @@ class PrintInfoMixin:
     #__repr__ #множественное_наследование #миксины
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Метод инициализации с выводом информации о создаваемом объекте.
 
@@ -300,12 +300,12 @@ class Product(BaseProduct):
 
         return repr_string
 
-    def __add__(self, other: "Product") -> float:
+    def __add__(self, other: BaseProduct) -> float:
         """
         Метод сложения двух продуктов, возвращающий общую стоимость товаров на складе.
 
         Args:
-            other (Product): Второй продукт для сложения.
+            other (BaseProduct): Второй продукт для сложения.
 
         Returns:
             float: Общая стоимость товаров на складе (цена * количество).
@@ -468,9 +468,13 @@ class Category(BaseContainer):
         Category.category_count += 1
 
         if products:
-            for product in products:
-                self.add_product(product)
+            # Логируем количество продуктов
+            logger.debug(f"Попытка добавить {len(products)} продуктов в категорию {name}")
 
+            for product in products:
+                # Логируем каждый продукт перед добавлением
+                logger.debug(f"Добавляю продукт: {product.name}")
+                self.add_product(product)
 
     # Методы работы с продуктами
     def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
@@ -499,7 +503,6 @@ class Category(BaseContainer):
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
             logger.error(error_msg)
             raise ValueError(error_msg)
-
 
     # Магические методы
     def __iter__(self) -> "CategoryIterator":
@@ -588,26 +591,24 @@ class Category(BaseContainer):
         Returns:
             int: Общее количество продуктов.
         """
-        total_products = sum(len(category.products) for category in cls.__subclasses__() + [cls])
-        logger.debug(f"Получен общий счетчик продуктов: {total_products}")
-        return total_products
-
-    # @classmethod
-    # def get_total_product_count(cls) -> int:
-    #     """
-    #     Класс-метод для получения общего количества продуктов во всех категориях.
-    #
-    #     Returns:
-    #         int: Общее количество продуктов.
-    #     """
-    #     logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
-    #     return cls._product_count
+        logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
+        return cls._product_count
 
 
 class Smartphone(PrintInfoMixin, Product):
     """
     Класс, представляющий смартфон.
     """
+
+    def __repr__(self) -> str:
+        """
+        Возвращает строковое представление смартфона для отладки.
+
+        Returns:
+            str: Строка с информацией о смартфоне в формате
+            "Название, цена руб. Остаток: количество шт."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     def __init__(
         self,
@@ -620,7 +621,6 @@ class Smartphone(PrintInfoMixin, Product):
         memory: int,
         color: str,
     ):
-
         """
         Инициализирует смартфон с дополнительными характеристиками.
 
@@ -640,12 +640,14 @@ class Smartphone(PrintInfoMixin, Product):
         self.memory = memory
         self.color = color
 
-    def __add__(self, other: Product) -> float:
+        logger.info(f"Создан смартфон: {name}, модель: {model}, цвет: {color}")
+
+    def __add__(self, other: BaseProduct) -> float:
         """
         Метод сложения двух смартфонов с учетом их производительности.
 
         Args:
-            other (Product): Второй продукт для сложения.
+            other (BaseProduct): Второй продукт для сложения.
 
         Returns:
             float: Общая стоимость товаров на складе с учетом производительности.
@@ -672,6 +674,16 @@ class LawnGrass(PrintInfoMixin, Product):
     Класс, представляющий газонную траву.
     """
 
+    def __repr__(self) -> str:
+        """
+        Возвращает строковое представление газонной травы для отладки.
+
+        Returns:
+            str: Строка с информацией о газонной траве в формате
+            "Название, цена руб. Остаток: количество шт."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
     def __init__(
         self,
         name: str,
@@ -682,7 +694,6 @@ class LawnGrass(PrintInfoMixin, Product):
         germination_period: str,
         color: str,
     ):
-
         """
         Инициализирует газонную траву с дополнительными характеристиками.
         Args:
@@ -699,12 +710,14 @@ class LawnGrass(PrintInfoMixin, Product):
         self.germination_period = germination_period
         self.color = color
 
-    def __add__(self, other: Product) -> float:
+        logger.info(f"Создана газонная трава: {name}, страна: {country}, период прорастания: {germination_period}")
+
+    def __add__(self, other: BaseProduct) -> float:
         """
         Метод сложения двух видов газонной травы.
 
         Args:
-            other (Product): Второй продукт для сложения.
+            other (BaseProduct): Второй продукт для сложения.
 
         Returns:
             float: Общая стоимость товаров на складе.
