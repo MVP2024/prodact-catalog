@@ -471,16 +471,6 @@ class Category(BaseContainer):
             for product in products:
                 self.add_product(product)
 
-        super().__init__(name, description)
-        self._products: List[Product] = []
-
-        if products:
-            for product in products:
-                self.add_product(product)
-
-    def __str__(self) -> str:
-        total_quantity = sum(product.quantity for product in self._products)
-        return f"{self.name}, количество товаров: {total_quantity} шт."
 
     # Методы работы с продуктами
     def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
@@ -618,14 +608,7 @@ class Smartphone(PrintInfoMixin, Product):
         memory: int,
         color: str,
     ):
-        """
-        Инициализирует смартфон с дополнительными характеристиками.
-        """
-        super().__init__(name, description, price, quantity)
-        self.efficiency = efficiency
-        self.model = model
-        self.memory = memory
-        self.color = color
+
         """
         Инициализирует смартфон с дополнительными характеристиками.
 
