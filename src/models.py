@@ -1,11 +1,102 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
 
 
-class Product:
+class PrintInfoMixin:
+    """
+    Миксин для вывода информации о создании объекта.
+
+    #__repr__ #множественное_наследование #миксины
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Метод инициализации с выводом информации о создаваемом объекте.
+
+        Args:
+            *args: Позиционные аргументы.
+            **kwargs: Именованные аргументы.
+        """
+        print(f"Создан объект класса {self.__class__.__name__}")
+        print(f"Параметры инициализации: {args}")
+
+        # Вызываем метод инициализации родительского класса
+        super().__init__(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        """
+        Расширенный метод repr для вывода полной информации об объекте.
+
+        Returns:
+            str: Строковое представление объекта с подробной информацией.
+        """
+        # Получаем стандартное строковое представление
+        base_repr = super().__repr__()
+
+        # Добавляем дополнительную информацию о классе
+        return f"Объект класса {self.__class__.__name__}: {base_repr}"
+
+
+class BaseProduct(ABC):
+    """
+    Абстрактный базовый класс для всех продуктов.
+
+    #ABC #abstractmethod
+    """
+
+    @abstractmethod
+    def __init__(self, name: str, description: str, price: float, quantity: int):
+        """
+        Абстрактный метод инициализации продукта.
+
+        Args:
+            name (str): Название продукта.
+            description (str): Описание продукта.
+            price (float): Цена продукта.
+            quantity (int): Количество продукта.
+        """
+        pass
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """
+        Абстрактный метод строкового представления продукта.
+
+        Returns:
+            str: Строковое представление продукта.
+        """
+        pass
+
+    @abstractmethod
+    def __add__(self, other: 'BaseProduct') -> float:
+        """
+        Абстрактный метод сложения продуктов.
+
+        Args:
+            other (BaseProduct): Второй продукт для сложения.
+
+        Returns:
+            float: Результат сложения продуктов.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def price(self) -> float:
+        """
+        Абстрактное свойство для получения цены продукта.
+
+        Returns:
+            float: Цена продукта.
+        """
+        pass
+
+
+class Product(PrintInfoMixin, BaseProduct):
     """Класс, представляющий продукт."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
@@ -18,10 +109,15 @@ class Product:
             price (float): Цена продукта.
             quantity (int): Количество продукта в наличии.
         """
+        # Порядок важен: сначала миксин, потом BaseProduct
+        super().__init__(name, description, price, quantity)
+
         self.name = name
         self.description = description
         self._price = price
         self.quantity = quantity
+
+        logger.info(f"Создан продукт: {name}")
 
     # Свойства и сеттеры
     @property
