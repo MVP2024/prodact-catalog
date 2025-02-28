@@ -6,41 +6,114 @@ from typing import Any, Dict, List, Optional, Union
 logger = logging.getLogger(__name__)
 
 
-class PrintInfoMixin:
+# Абстрактный базовый класс
+class BaseContainer(ABC):
     """
-    Миксин для вывода информации о создании объекта.
+    Абстрактный базовый класс для контейнеров (Категория и Заказ).
 
-    #__repr__ #множественное_наследование #миксины
+    #создание_класса #ABC #abstractmethod
     """
 
-    def __init__(self, *args, **kwargs):
+    # Статические атрибуты для подсчета
+    _total_count = 0
+
+    def __init__(self, name: str, description: str):
         """
-        Метод инициализации с выводом информации о создаваемом объекте.
+        Инициализация базового контейнера.
 
         Args:
-            *args: Позиционные аргументы.
-            **kwargs: Именованные аргументы.
+            name (str): Название контейнера.
+            description (str): Описание контейнера.
         """
-        print(f"Создан объект класса {self.__class__.__name__}")
-        print(f"Параметры инициализации: {args}")
+        self.name = name
+        self.description = description
 
-        # Вызываем метод инициализации родительского класса
-        super().__init__(*args, **kwargs)
+        # Увеличиваем общий счетчик
+        BaseContainer._total_count += 1
 
-    def __repr__(self) -> str:
+    @classmethod
+    def get_total_count(cls) -> int:
         """
-        Расширенный метод repr для вывода полной информации об объекте.
+        Получение общего количества созданных контейнеров.
 
         Returns:
-            str: Строковое представление объекта с подробной информацией.
+            int: Общее количество контейнеров.
         """
-        # Получаем стандартное строковое представление
-        base_repr = super().__repr__()
+        return cls._total_count
 
-        # Добавляем дополнительную информацию о классе
-        return f"Объект класса {self.__class__.__name__}: {base_repr}"
+    @abstractmethod
+    def __str__(self) -> str:
+        """
+        Абстрактный метод строкового представления.
+
+        Returns:
+            str: Строковое представление контейнера.
+        """
+        pass
 
 
+class Order(BaseContainer):
+    """
+    Класс, представляющий заказ.
+
+    #создание_класса #ABC #abstractmethod
+    """
+
+    def __init__(self, name: str, description: str, product: 'Product', quantity: int):
+        """
+        Инициализация заказа.
+
+        Args:
+            name (str): Название заказа.
+            description (str): Описание заказа.
+            product (Product): Товар в заказе.
+            quantity (int): Количество товара.
+        """
+        super().__init__(name, description)
+
+        # Проверка корректности количества
+        if quantity <= 0:
+            raise ValueError("Количество товара должно быть положительным")
+
+        if quantity > product.quantity:
+            raise ValueError(f"Недостаточно товара на складе. Запрошено: {quantity}, доступно: {product.quantity}")
+
+        self.product = product
+        self.quantity = quantity
+
+        # Уменьшаем количество товара на складе
+        product.quantity -= quantity
+
+        logger.info(f"Создан заказ: {name}, товар: {product.name}, количество: {quantity}")
+
+    def __str__(self) -> str:
+        """
+        Строковое представление заказа.
+
+        Returns:
+            str: Информация о заказе.
+        """
+        total_cost = self.product.price * self.quantity
+        return (
+            f"Заказ: {self.name}\n"
+            f"Описание: {self.description}\n"
+            f"Товар: {self.product.name}\n"
+            f"Количество: {self.quantity}\n"
+            f"Общая стоимость: {total_cost} руб."
+        )
+
+    @property
+    def total_cost(self) -> float:
+        """
+        Вычисление общей стоимости заказа.
+
+        Returns:
+            float: Общая стоимость заказа.
+        """
+        return self.product.price * self.quantity
+
+
+# Абстрактный базовый класс для продуктов
 class BaseProduct(ABC):
     """
     Абстрактный базовый класс для всех продуктов.
@@ -96,7 +169,44 @@ class BaseProduct(ABC):
         pass
 
 
-class Product(PrintInfoMixin, BaseProduct):
+# Миксин для вывода информации
+class PrintInfoMixin:
+    """
+    Миксин для вывода информации о создании объекта.
+
+    #__repr__ #множественное_наследование #миксины
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Метод инициализации с выводом информации о создаваемом объекте.
+
+        Args:
+            *args: Позиционные аргументы.
+            **kwargs: Именованные аргументы.
+        """
+        print(f"Создан объект класса {self.__class__.__name__}")
+        print(f"Параметры инициализации: {args}")
+
+        # Вызываем метод инициализации родительского класса
+        super().__init__(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        """
+        Расширенный метод repr для вывода полной информации об объекте.
+
+        Returns:
+            str: Строковое представление объекта с подробной информацией.
+        """
+        # Получаем стандартное строковое представление
+        base_repr = super().__repr__()
+
+        # Добавляем дополнительную информацию о классе
+        return f"Объект класса {self.__class__.__name__}: {base_repr}"
+
+
+# Основной класс продукта
+class Product(BaseProduct):
     """Класс, представляющий продукт."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
@@ -109,9 +219,6 @@ class Product(PrintInfoMixin, BaseProduct):
             price (float): Цена продукта.
             quantity (int): Количество продукта в наличии.
         """
-        # Порядок важен: сначала миксин, потом BaseProduct
-        super().__init__(name, description, price, quantity)
-
         self.name = name
         self.description = description
         self._price = price
@@ -347,35 +454,33 @@ class CategoryIterator:
         raise StopIteration
 
 
-class Category:
-    """Класс, представляющий категорию продуктов."""
-
+# Класс категории
+class Category(BaseContainer):
     # Статические атрибуты
-    category_count = 0
-    _product_count = 0
+    _product_count = 0  # Добавляем статический атрибут для подсчета продуктов
+    category_count = 0  # Добавляем статический атрибут для подсчета категорий
 
-    # Магический метод инициализации
     def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
-        """
-        Инициализирует категорию с заданными атрибутами.
-
-        Args:
-            name (str): Название категории.
-            description (str): Описание категории.
-            products (Optional[List[Product]], optional): Список продуктов в категории.
-        """
-        self.name = name
-        self.description = description
+        super().__init__(name, description)
         self._products: List[Product] = []
 
-        logger.info(f"Создана новая категория: {name}")
+        # Увеличиваем счетчик категорий при создании
         Category.category_count += 1
 
         if products:
-            logger.debug(f"Попытка добавить {len(products)} продуктов в категорию {name}")
             for product in products:
-                logger.debug(f"Добавляю продукт: {product.name}")
                 self.add_product(product)
+
+        super().__init__(name, description)
+        self._products: List[Product] = []
+
+        if products:
+            for product in products:
+                self.add_product(product)
+
+    def __str__(self) -> str:
+        total_quantity = sum(product.quantity for product in self._products)
+        return f"{self.name}, количество товаров: {total_quantity} шт."
 
     # Методы работы с продуктами
     def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
@@ -398,12 +503,13 @@ class Category:
 
         try:
             self._products.append(product)
-            Category._product_count += 1
+            Category._product_count += 1  # Увеличиваем счетчик продуктов
             logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
         except Exception as e:
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
             logger.error(error_msg)
             raise ValueError(error_msg)
+
 
     # Магические методы
     def __iter__(self) -> "CategoryIterator":
@@ -496,13 +602,9 @@ class Category:
         return cls._product_count
 
 
-class Smartphone(Product):
+class Smartphone(PrintInfoMixin, Product):
     """
     Класс, представляющий смартфон.
-
-    #наследование
-    #создание_класса
-    #__init__
     """
 
     def __init__(
@@ -516,6 +618,14 @@ class Smartphone(Product):
         memory: int,
         color: str,
     ):
+        """
+        Инициализирует смартфон с дополнительными характеристиками.
+        """
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
         """
         Инициализирует смартфон с дополнительными характеристиками.
 
@@ -562,12 +672,9 @@ class Smartphone(Product):
         return total_value
 
 
-class LawnGrass(Product):
+class LawnGrass(PrintInfoMixin, Product):
     """
     Класс, представляющий газонную траву.
-    #наследование
-    #создание_класса
-    #__init__
     """
 
     def __init__(
@@ -580,6 +687,7 @@ class LawnGrass(Product):
         germination_period: str,
         color: str,
     ):
+
         """
         Инициализирует газонную траву с дополнительными характеристиками.
         Args:
