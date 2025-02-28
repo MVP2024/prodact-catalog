@@ -3,7 +3,17 @@ from unittest.mock import patch
 
 import pytest
 
-from src.models import Category, LawnGrass, Product, Smartphone
+from src.models import (
+    BaseContainer,
+    BaseProduct,
+    Category,
+    CategoryIterator,
+    LawnGrass,
+    Order,
+    PrintInfoMixin,
+    Product,
+    Smartphone,
+)
 
 
 def test_product_price_setter_with_same_price() -> None:
@@ -297,13 +307,19 @@ def test_add_product_multiple() -> None:
     assert Category.get_total_product_count() == 2
 
 
-def test_add_product_error_handling(caplog: Any) -> None:
+def test_add_product_with_string(caplog: Any) -> None:
+    """
+    Тест добавления строки вместо продукта в категорию.
+    """
     category = Category("Электроника", "Описание")
 
-    with pytest.raises(ValueError):
-        category.add_product(None)
+    # Пытаемся добавить строку
+    category.add_product("Некорректный продукт")
 
-    assert "Ошибка при добавлении продукта" in caplog.text
+    # Проверяем, что было выведено предупреждение
+    assert "Попытка добавить строку вместо продукта" in caplog.text
+
+    # Проверяем, что количество продуктов в категории не изменилось
     assert len(category.products) == 0
 
 
@@ -727,3 +743,325 @@ def test_add_method_logging() -> None:
         mock_logger_error.assert_called_once_with(
             f"Нельзя складывать товары разных типов: '{type(smartphone1).__name__}' и '{type(lawn_grass).__name__}'"
         )
+
+
+def test_add_product_with_none(caplog: Any) -> None:
+    """
+    Тест добавления None в категорию.
+    """
+    category = Category("Электроника", "Описание")
+
+    with pytest.raises(ValueError) as excinfo:
+        category.add_product(None)
+
+    # Проверяем текст исключения
+    assert f"Ошибка при добавлении продукта в категорию '{category.name}'" in str(excinfo.value)
+
+    # Проверяем, что была залоггирована ошибка
+    assert "Ошибка при добавлении продукта" in caplog.text
+
+    # Проверяем, что количество продуктов в категории не изменилось
+    assert len(category.products) == 0
+
+
+def test_category_iterator_iter_method() -> None:
+    """
+    Тест метода __iter__ в CategoryIterator.
+    Проверяет, что метод возвращает сам объект итератора.
+    """
+    category = Category("Электроника", "Описание")
+    product1 = Product("Смартфон", "Описание", 1000.0, 5)
+    product2 = Product("Планшет", "Описание", 500.0, 3)
+
+    category.add_product(product1)
+    category.add_product(product2)
+
+    iterator = CategoryIterator(category)
+
+    # Проверяем, что __iter__ возвращает сам объект итератора
+    assert iterator.__iter__() is iterator
+
+
+def test_print_info_mixin_repr_method() -> None:
+    """
+    Тест метода __repr__ в PrintInfoMixin.
+    Проверяет корректность формирования строки repr.
+    """
+
+    class TestProduct(PrintInfoMixin, Product):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            super().__init__(name, description, price, quantity)
+
+    product = TestProduct("Тестовый продукт", "Описание", 100.0, 10)
+
+    # Проверяем, что repr содержит имя класса и стандартное строковое представление
+    assert "Объект класса TestProduct" in repr(product)
+    assert "Тестовый продукт, 100.0 руб. Остаток: 10 шт." in repr(product)
+
+
+def test_base_product_price_property_implementation() -> None:
+    """
+    Тест корректной реализации свойства price в конкретном классе.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    # Проверяем, что свойство price работает корректно
+    assert product.price == 100.0
+
+    # Проверяем логирование при получении цены
+    with patch("src.models.logger.debug") as mock_logger_debug:
+        _ = product.price
+        mock_logger_debug.assert_called_once_with("Получение цены для продукта 'Тестовый продукт'. "
+                                                  "Текущая цена: 100.0")
+
+
+def test_base_product_add_method_implementation() -> None:
+    """
+    Тест корректной реализации метода __add__ в конкретном классе.
+    """
+    product1 = Product("Продукт 1", "Описание", 50.0, 5)
+    product2 = Product("Продукт 2", "Описание", 100.0, 3)
+
+    # Проверяем, что метод __add__ работает корректно
+    total_value = product1 + product2
+    assert total_value == 550.0  # 50 * 5 + 100 * 3
+
+    # Проверяем логирование при сложении
+    with patch("src.models.logger.info") as mock_logger_info:
+        product1 + product2
+        mock_logger_info.assert_called_once_with(
+            f"Выполнено сложение товаров: {product1.name} и {product2.name}. Общая стоимость: 550.0"
+        )
+
+
+def test_base_product_add_method_signature() -> None:
+    """
+    Тест сигнатуры метода __add__.
+    Проверяет корректность типов аргументов и возвращаемого значения.
+    """
+    from typing import get_type_hints
+
+    type_hints = get_type_hints(BaseProduct.__add__)
+
+    assert type_hints["other"] == BaseProduct
+    assert type_hints["return"] == float
+
+
+def test_base_product_add_method_documentation() -> None:
+    """
+    Тест документации абстрактного метода __add__.
+    Проверяет наличие и не пустые строки документации.
+    """
+    assert BaseProduct.__add__.__doc__ is not None
+    assert len(BaseProduct.__add__.__doc__.strip()) > 0
+
+
+def test_base_product_str_method_comprehensive() -> None:
+    """
+    Общий тест для абстрактного метода __str__ в BaseProduct.
+    Проверяет невозможность создания экземпляра, требование реализации метода в наследниках
+    и корректность его работы.
+    """
+    # Проверка невозможности создания экземпляра абстрактного класса
+    with pytest.raises(TypeError) as excinfo:
+        # Создаем анонимный подкласс без реализации абстрактных методов
+        type(
+            "FailedProduct",
+            (BaseProduct,),
+            {
+                "__init__": lambda self, name, description, price, quantity: None,
+                "price": property(lambda self: 0.0),
+                "__add__": lambda self, other: 0.0,
+            },
+        )()
+
+    # Проверяем, что сообщение об ошибке содержит нужную информацию
+    assert "Can't instantiate abstract class" in str(excinfo.value)
+    assert "__str__" in str(excinfo.value)
+
+    # Проверка требования реализации метода в наследниках
+    class IncompleteProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            raise NotImplementedError("Метод __add__ не реализован")
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    # Теперь создание экземпляра должно быть возможным, так как __str__ реализован
+    product = IncompleteProduct("Тестовый продукт", "Описание", 100.0, 10)
+    assert str(product) == "Тестовый продукт, 100.0 руб."
+
+    # Проверка корректности работы __str__ в наследнике
+    class TestProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            raise NotImplementedError("Метод __add__ не реализован")
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    test_product = TestProduct("Тестовый продукт", "Описание", 100.0, 10)
+    assert isinstance(str(test_product), str)
+    assert str(test_product) == "Тестовый продукт, 100.0 руб."
+
+    # Проверка атрибутов абстрактного метода
+    assert hasattr(BaseProduct, "__str__"), "BaseProduct должен иметь метод __str__"
+    assert callable(getattr(BaseProduct, "__str__", None)), "__str__ должен быть методом"
+    assert hasattr(BaseProduct.__str__, "__isabstractmethod__"), "__str__ должен быть абстрактным методом"
+
+
+def test_base_product_str_method_documentation() -> None:
+    """
+    Тест документации абстрактного метода __str__.
+    """
+    assert BaseProduct.__str__.__doc__ is not None
+    assert len(BaseProduct.__str__.__doc__.strip()) > 20
+    assert "Returns" in BaseProduct.__str__.__doc__
+    assert "str:" in BaseProduct.__str__.__doc__
+
+
+def test_base_product_str_method_type_hints() -> None:
+    """
+    Тест сигнатуры и типов возвращаемого значения метода __str__.
+    """
+    from typing import get_type_hints
+
+    type_hints = get_type_hints(BaseProduct.__str__)
+    assert type_hints["return"] == str
+
+
+def test_base_product_incomplete_class_methods() -> None:
+    """
+    Тест методов неполного класса продукта.
+    """
+
+    class IncompleteProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            # Просто заглушка для теста
+            return 0.0
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    # Проверяем, что методы вызываются без ошибок
+    product = IncompleteProduct("Тестовый продукт", "Описание", 100.0, 10)
+
+    assert product.price == 100.0
+    assert str(product) == "Тестовый продукт, 100.0 руб."
+    assert product.__add__(product) == 0.0
+
+
+def test_container_str_methods() -> None:
+    """
+    Тест методов __str__ в тестовых классах контейнеров.
+    """
+
+    class TestContainer1(BaseContainer):
+        def __str__(self) -> str:
+            return "Test Container 1"
+
+    class TestContainer2(BaseContainer):
+        def __str__(self) -> str:
+            return "Test Container 2"
+
+    container1 = TestContainer1("Контейнер 1", "Описание 1")
+    container2 = TestContainer2("Контейнер 2", "Описание 2")
+
+    assert str(container1) == "Test Container 1"
+    assert str(container2) == "Test Container 2"
+
+    # Тест успешной инициализации заказа.
+
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    order = Order("Тестовый заказ", "Описание заказа", product, 5)
+
+    assert order.name == "Тестовый заказ"
+    assert order.description == "Описание заказа"
+    assert order.product == product
+    assert order.quantity == 5
+    assert product.quantity == 5  # Количество товара уменьшилось
+
+
+def test_order_initialization_with_zero_quantity() -> None:
+    """
+    Тест инициализации заказа с нулевым количеством.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        Order("Тестовый заказ", "Описание заказа", product, 0)
+
+
+def test_order_initialization_with_negative_quantity() -> None:
+    """
+    Тест инициализации заказа с отрицательным количеством.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        Order("Тестовый заказ", "Описание заказа", product, -5)
+
+
+def test_order_initialization_with_insufficient_product_quantity() -> None:
+    """
+    Тест инициализации заказа с количеством, превышающим доступное количество товара.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 5)
+
+    with pytest.raises(ValueError, match=r"Недостаточно товара на складе\. Запрошено: 10, доступно: 5"):
+        Order("Тестовый заказ", "Описание заказа", product, 10)
+
+
+def test_order_initialization_logging() -> None:
+    """
+    Тест логирования при создании заказа.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with patch("src.models.logger.info") as mock_logger_info:
+        Order("Тестовый заказ", "Описание заказа", product, 5)
+
+        mock_logger_info.assert_called_once_with(f"Создан заказ: Тестовый заказ, товар: {product.name}, количество: 5")
+
+
+def test_order_initialization_multiple_orders() -> None:
+    """
+    Тест создания нескольких заказов с одним и тем же продуктом.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 20)
+
+    order1 = Order("Заказ 1", "Описание заказа 1", product, 5)
+    order2 = Order("Заказ 2", "Описание заказа 2", product, 7)
+
+    assert order1.quantity == 5
+    assert order2.quantity == 7
+    assert product.quantity == 8  # 20 - 5 - 7
