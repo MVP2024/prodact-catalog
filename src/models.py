@@ -588,6 +588,19 @@ class Category(BaseContainer):
         Returns:
             int: Общее количество продуктов.
         """
+        total_products = sum(len(category.products) for category in cls.__subclasses__() + [cls])
+        logger.debug(f"Получен общий счетчик продуктов: {total_products}")
+        return total_products
+
+
+    @classmethod
+    def get_total_product_count(cls) -> int:
+        """
+        Класс-метод для получения общего количества продуктов во всех категориях.
+
+        Returns:
+            int: Общее количество продуктов.
+        """
         logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
         return cls._product_count
 
