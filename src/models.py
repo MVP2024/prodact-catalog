@@ -592,17 +592,16 @@ class Category(BaseContainer):
         logger.debug(f"Получен общий счетчик продуктов: {total_products}")
         return total_products
 
-
-    @classmethod
-    def get_total_product_count(cls) -> int:
-        """
-        Класс-метод для получения общего количества продуктов во всех категориях.
-
-        Returns:
-            int: Общее количество продуктов.
-        """
-        logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
-        return cls._product_count
+    # @classmethod
+    # def get_total_product_count(cls) -> int:
+    #     """
+    #     Класс-метод для получения общего количества продуктов во всех категориях.
+    #
+    #     Returns:
+    #         int: Общее количество продуктов.
+    #     """
+    #     logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
+    #     return cls._product_count
 
 
 class Smartphone(PrintInfoMixin, Product):
