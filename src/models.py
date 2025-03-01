@@ -1,11 +1,212 @@
 import logging
-from typing import Any, Dict, List, Optional
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Union
 
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
 
 
-class Product:
+# Абстрактный базовый класс
+class BaseContainer(ABC):
+    """
+    Абстрактный базовый класс для контейнеров (Категория и Заказ).
+
+    #создание_класса #ABC #abstractmethod
+    """
+
+    # Статические атрибуты для подсчета
+    _total_count = 0
+
+    def __init__(self, name: str, description: str):
+        """
+        Инициализация базового контейнера.
+
+        Args:
+            name (str): Название контейнера.
+            description (str): Описание контейнера.
+        """
+        self.name = name
+        self.description = description
+
+        # Увеличиваем общий счетчик
+        BaseContainer._total_count += 1
+
+    @classmethod
+    def get_total_count(cls) -> int:
+        """
+        Получение общего количества созданных контейнеров.
+
+        Returns:
+            int: Общее количество контейнеров.
+        """
+        return cls._total_count
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """
+        Абстрактный метод строкового представления.
+
+        Returns:
+            str: Строковое представление контейнера.
+        """
+        pass
+
+
+class Order(BaseContainer):
+    """
+    Класс, представляющий заказ.
+
+    #создание_класса #ABC #abstractmethod
+    """
+
+    def __init__(self, name: str, description: str, product: "Product", quantity: int):
+        """
+        Инициализация заказа.
+
+        Args:
+            name (str): Название заказа.
+            description (str): Описание заказа.
+            product (Product): Товар в заказе.
+            quantity (int): Количество товара.
+        """
+        super().__init__(name, description)
+
+        # Проверка корректности количества
+        if quantity <= 0:
+            raise ValueError("Количество товара должно быть положительным")
+
+        if quantity > product.quantity:
+            raise ValueError(f"Недостаточно товара на складе. Запрошено: {quantity}, доступно: {product.quantity}")
+
+        self.product = product
+        self.quantity = quantity
+
+        # Уменьшаем количество товара на складе
+        product.quantity -= quantity
+
+        logger.info(f"Создан заказ: {name}, товар: {product.name}, количество: {quantity}")
+
+    def __str__(self) -> str:
+        """
+        Строковое представление заказа.
+
+        Returns:
+            str: Информация о заказе.
+        """
+        total_cost = self.product.price * self.quantity
+        return (
+            f"Заказ: {self.name}\n"
+            f"Описание: {self.description}\n"
+            f"Товар: {self.product.name}\n"
+            f"Количество: {self.quantity}\n"
+            f"Общая стоимость: {total_cost} руб."
+        )
+
+    @property
+    def total_cost(self) -> float:
+        """
+        Вычисление общей стоимости заказа.
+
+        Returns:
+            float: Общая стоимость заказа.
+        """
+        return self.product.price * self.quantity
+
+
+# Абстрактный базовый класс для продуктов
+class BaseProduct(ABC):
+    """
+    Абстрактный базовый класс для всех продуктов.
+
+    #ABC #abstractmethod
+    """
+
+    @abstractmethod
+    def __init__(self, name: str, description: str, price: float, quantity: int):
+        """
+        Абстрактный метод инициализации продукта.
+
+        Args:
+            name (str): Название продукта.
+            description (str): Описание продукта.
+            price (float): Цена продукта.
+            quantity (int): Количество продукта.
+        """
+        pass
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """
+        Абстрактный метод строкового представления продукта.
+
+        Returns:
+            str: Строковое представление продукта.
+        """
+        pass
+
+    @abstractmethod
+    def __add__(self, other: "BaseProduct") -> float:
+        """
+        Абстрактный метод сложения продуктов.
+
+        Args:
+            other (BaseProduct): Второй продукт для сложения.
+
+        Returns:
+            float: Результат сложения продуктов.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def price(self) -> float:
+        """
+        Абстрактное свойство для получения цены продукта.
+
+        Returns:
+            float: Цена продукта.
+        """
+        pass
+
+
+# Миксин для вывода информации
+class PrintInfoMixin:
+    """
+    Миксин для вывода информации о создании объекта.
+
+    #__repr__ #множественное_наследование #миксины
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Метод инициализации с выводом информации о создаваемом объекте.
+
+        Args:
+            *args: Позиционные аргументы.
+            **kwargs: Именованные аргументы.
+        """
+        print(f"Создан объект класса {self.__class__.__name__}")
+        print(f"Параметры инициализации: {args}")
+
+        # Вызываем метод инициализации родительского класса
+        super().__init__(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        """
+        Расширенный метод repr для вывода полной информации об объекте.
+
+        Returns:
+            str: Строковое представление объекта с подробной информацией.
+        """
+        # Получаем стандартное строковое представление
+        base_repr = super().__repr__()
+
+        # Добавляем дополнительную информацию о классе
+        return f"Объект класса {self.__class__.__name__}: {base_repr}"
+
+
+# Основной класс продукта
+class Product(BaseProduct):
     """Класс, представляющий продукт."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
@@ -23,10 +224,13 @@ class Product:
         self._price = price
         self.quantity = quantity
 
+        logger.info(f"Создан продукт: {name}")
+
     # Свойства и сеттеры
     @property
     def price(self) -> float:
         """Геттер для цены."""
+        logger.debug(f"Получение цены для продукта '{self.name}'. " f"Текущая цена: {self._price}")
         return self._price
 
     @price.setter
@@ -72,7 +276,13 @@ class Product:
             str: Строка с информацией о продукте в формате
             "Название продукта, цена руб. Остаток: количество шт."
         """
-        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+        str_representation = f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+        logger.debug(
+            f"Сформирована строка str для продукта: '{self.name}'. " f"Полное представление: {str_representation}"
+        )
+
+        return str_representation
 
     def __repr__(self) -> str:
         """
@@ -84,14 +294,18 @@ class Product:
         Returns:
             str: Строка с информацией о продукте
         """
-        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+        repr_string = f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
-    def __add__(self, other: "Product") -> float:
+        logger.debug(f"Сформирована строка repr для продукта: '{self.name}'. " f"Полное представление: {repr_string}")
+
+        return repr_string
+
+    def __add__(self, other: BaseProduct) -> float:
         """
         Метод сложения двух продуктов, возвращающий общую стоимость товаров на складе.
 
         Args:
-            other (Product): Второй продукт для сложения.
+            other (BaseProduct): Второй продукт для сложения.
 
         Returns:
             float: Общая стоимость товаров на складе (цена * количество).
@@ -99,10 +313,20 @@ class Product:
         Raises:
             TypeError: Если аргумент не является экземпляром Product.
         """
-        if not isinstance(other, Product):
-            raise TypeError(f"Unsupported operand type for +: '{type(self).__name__}' and '{type(other).__name__}'")
+        if other is None:
+            error_msg = "Операция сложения невозможна с None"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
-        return self.price * self.quantity + other.price * other.quantity
+        if not isinstance(other, Product):
+            error_msg = f"Нельзя складывать товары разных типов: '{type(self).__name__}' и '{type(other).__name__}'"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
+        total_value = self.price * self.quantity + other.price * other.quantity
+        logger.info(f"Выполнено сложение товаров: {self.name} и {other.name}. Общая стоимость: {total_value}")
+
+        return total_value
 
     # Классовые методы создания продуктов
     @classmethod
@@ -188,6 +412,10 @@ class CategoryIterator:
         Args:
             category (Category): Категория, товары которой будут перебираться.
         """
+        logger.debug(
+            f"Инициализация итератора для категории '{category.name}'. "
+            f"Общее количество продуктов: {len(category.products)}"
+        )
         self._category = category
         self._index = 0
 
@@ -213,60 +441,63 @@ class CategoryIterator:
         if self._index < len(self._category.products):
             product = self._category.products[self._index]
             self._index += 1
+            logger.debug(
+                f"Итерация в категории '{self._category.name}'. "
+                f"Возвращен продукт: {product.name}. "
+                f"Текущий индекс: {self._index}"
+            )
+
             return product
+
+        logger.debug(f"Итерация в категории '{self._category.name}' завершена. " "Достигнут конец списка продуктов.")
 
         raise StopIteration
 
 
-class Category:
-    """Класс, представляющий категорию продуктов."""
-
+# Класс категории
+class Category(BaseContainer):
     # Статические атрибуты
-    category_count = 0
-    _product_count = 0
+    _product_count = 0  # Добавляем статический атрибут для подсчета продуктов
+    category_count = 0  # Добавляем статический атрибут для подсчета категорий
 
-    # Магический метод инициализации
     def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
-        """
-        Инициализирует категорию с заданными атрибутами.
-
-        Args:
-            name (str): Название категории.
-            description (str): Описание категории.
-            products (Optional[List[Product]], optional): Список продуктов в категории.
-        """
-        self.name = name
-        self.description = description
+        super().__init__(name, description)
         self._products: List[Product] = []
 
-        logger.info(f"Создана новая категория: {name}")
+        # Увеличиваем счетчик категорий при создании
         Category.category_count += 1
 
         if products:
+            # Логируем количество продуктов
             logger.debug(f"Попытка добавить {len(products)} продуктов в категорию {name}")
+
             for product in products:
+                # Логируем каждый продукт перед добавлением
                 logger.debug(f"Добавляю продукт: {product.name}")
                 self.add_product(product)
 
     # Методы работы с продуктами
-    def add_product(self, product: Product) -> None:
-        """
-        Добавляет продукт в категорию.
-
-        Args:
-            product (Product): Продукт для добавления.
-
-        Raises:
-            ValueError: Если продукт None или возникла ошибка при добавлении.
-        """
+    def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
+        # Проверка на None
         if product is None:
-            error_msg = f"Ошибка при добавлении продукта None в категорию '{self.name}'"
+            error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}'"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
+        # Если передана строка, можно добавить дополнительную логику
+        if isinstance(product, str):
+            logger.warning(f"Попытка добавить строку вместо продукта: {product}")
+            return
+
+        # Проверка на тип Product
+        if not isinstance(product, Product):
+            error_msg = f"В категорию можно добавлять только продукты. Получен объект типа: {type(product).__name__}"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
         try:
             self._products.append(product)
-            Category._product_count += 1
+            Category._product_count += 1  # Увеличиваем счетчик продуктов
             logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
         except Exception as e:
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
@@ -281,6 +512,10 @@ class Category:
         Returns:
             CategoryIterator: Итератор товаров категории.
         """
+        logger.debug(
+            f"Создан итератор для категории '{self.name}'." f"Количество продуктов для итерации: {len(self._products)}"
+        )
+
         return CategoryIterator(self)
 
     def __str__(self) -> str:
@@ -292,7 +527,13 @@ class Category:
             "Название категории, количество товаров: X шт."
         """
         total_quantity = sum(product.quantity for product in self._products)
-        return f"{self.name}, количество товаров: {total_quantity} шт."
+        result = f"{self.name}, количество товаров: {total_quantity} шт."
+
+        logger.debug(
+            f"Сформирована строка представления категории '{self.name}'." f"Общее количество товаров: {total_quantity}"
+        )
+
+        return result
 
     # Свойства
     @property
@@ -303,6 +544,9 @@ class Category:
         Returns:
             List[Product]: Копия списка продуктов.
         """
+        logger.debug(
+            f"Получен список продуктов для категории '{self.name}'. Количество продуктов: {len(self._products)}"
+        )
         return self._products.copy()
 
     @property
@@ -326,11 +570,16 @@ class Category:
             str: Строка с описанием продуктов в категории.
         """
         if not self._products:
+            logger.debug(f"Категория '{self.name}' не содержит продуктов")
             return "В категории нет товаров"
 
         product_descriptions = [
             f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт." for product in self._products
         ]
+        logger.debug(
+            f"Сформирован список продуктов для категории '{self.name}'. Количество продуктов: {len(self._products)}"
+        )
+
         return "\n".join(product_descriptions)
 
     # Классовые методы
@@ -342,4 +591,148 @@ class Category:
         Returns:
             int: Общее количество продуктов.
         """
+        logger.debug(f"Получен общий счетчик продуктов: {cls._product_count}")
         return cls._product_count
+
+
+class Smartphone(PrintInfoMixin, Product):
+    """
+    Класс, представляющий смартфон.
+    """
+
+    def __repr__(self) -> str:
+        """
+        Возвращает строковое представление смартфона для отладки.
+
+        Returns:
+            str: Строка с информацией о смартфоне в формате
+            "Название, цена руб. Остаток: количество шт."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        price: float,
+        quantity: int,
+        efficiency: float,
+        model: str,
+        memory: int,
+        color: str,
+    ):
+        """
+        Инициализирует смартфон с дополнительными характеристиками.
+
+        Args:
+            name (str): Название смартфона.
+            description (str): Описание смартфона.
+            price (float): Цена смартфона.
+            quantity (int): Количество смартфонов.
+            efficiency (float): Производительность смартфона.
+            model (str): Модель смартфона.
+            memory (int): Объем встроенной памяти.
+            color (str): Цвет смартфона.
+        """
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+        logger.info(f"Создан смартфон: {name}, модель: {model}, цвет: {color}")
+
+    def __add__(self, other: BaseProduct) -> float:
+        """
+        Метод сложения двух смартфонов с учетом их производительности.
+
+        Args:
+            other (BaseProduct): Второй продукт для сложения.
+
+        Returns:
+            float: Общая стоимость товаров на складе с учетом производительности.
+
+        Raises:
+            TypeError: Если аргумент не является точно таким же типом.
+        """
+        if not (isinstance(other, Smartphone) and type(other) is type(self)):
+            error_msg = f"Нельзя складывать товары разных типов: '{type(self).__name__}' и '{type(other).__name__}'"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
+        total_value = self.price * self.quantity * self.efficiency + other.price * other.quantity * other.efficiency
+        logger.info(
+            f"Выполнено сложение смартфонов: {self.name} и {other.name}. "
+            f"Общая стоимость с учетом производительности: {total_value}"
+        )
+
+        return total_value
+
+
+class LawnGrass(PrintInfoMixin, Product):
+    """
+    Класс, представляющий газонную траву.
+    """
+
+    def __repr__(self) -> str:
+        """
+        Возвращает строковое представление газонной травы для отладки.
+
+        Returns:
+            str: Строка с информацией о газонной траве в формате
+            "Название, цена руб. Остаток: количество шт."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        price: float,
+        quantity: int,
+        country: str,
+        germination_period: str,
+        color: str,
+    ):
+        """
+        Инициализирует газонную траву с дополнительными характеристиками.
+        Args:
+            name (str): Название травы.
+            description (str): Описание травы.
+            price (float): Цена травы.
+            quantity (int): Количество травы.
+            country (str): Страна-производитель.
+            germination_period (str): Срок прорастания.
+            color (str): Цвет травы.
+        """
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+
+        logger.info(f"Создана газонная трава: {name}, страна: {country}, период прорастания: {germination_period}")
+
+    def __add__(self, other: BaseProduct) -> float:
+        """
+        Метод сложения двух видов газонной травы.
+
+        Args:
+            other (BaseProduct): Второй продукт для сложения.
+
+        Returns:
+            float: Общая стоимость товаров на складе.
+
+        Raises:
+            TypeError: Если аргумент не является точно таким же типом.
+        """
+        if not (isinstance(other, LawnGrass) and type(other) is type(self)):
+            error_msg = f"Нельзя складывать товары разных типов: '{type(self).__name__}' и '{type(other).__name__}'"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
+        total_value = self.price * self.quantity + other.price * other.quantity
+        logger.info(
+            f"Выполнено сложение газонной травы: {self.name} и {other.name}. " f"Общая стоимость: {total_value}"
+        )
+
+        return total_value

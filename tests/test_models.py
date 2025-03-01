@@ -3,7 +3,17 @@ from unittest.mock import patch
 
 import pytest
 
-from src.models import Category, Product
+from src.models import (
+    BaseContainer,
+    BaseProduct,
+    Category,
+    CategoryIterator,
+    LawnGrass,
+    Order,
+    PrintInfoMixin,
+    Product,
+    Smartphone,
+)
 
 
 def test_product_price_setter_with_same_price() -> None:
@@ -27,7 +37,7 @@ def test_product_add_method_with_none_product() -> None:
     """Тест сложения с None."""
     product = Product("Смартфон", "Описание", 1000.0, 5)
 
-    with pytest.raises(TypeError, match="Unsupported operand type"):
+    with pytest.raises(TypeError, match="Операция сложения невозможна с None"):
         product + None  # type: ignore
 
 
@@ -187,7 +197,7 @@ def test_add_method_type_error_message() -> None:
     with pytest.raises(TypeError) as excinfo:
         product + "Некорректный тип"  # type: ignore
 
-    assert "Unsupported operand type" in str(excinfo.value)
+    assert "Нельзя складывать товары разных типов" in str(excinfo.value)
 
 
 def test_category_iterator_multiple_iterations() -> None:
@@ -297,13 +307,19 @@ def test_add_product_multiple() -> None:
     assert Category.get_total_product_count() == 2
 
 
-def test_add_product_error_handling(caplog: Any) -> None:
+def test_add_product_with_string(caplog: Any) -> None:
+    """
+    Тест добавления строки вместо продукта в категорию.
+    """
     category = Category("Электроника", "Описание")
 
-    with pytest.raises(ValueError):
-        category.add_product(None)  # type: ignore
+    # Пытаемся добавить строку
+    category.add_product("Некорректный продукт")
 
-    assert "Ошибка при добавлении продукта" in caplog.text
+    # Проверяем, что было выведено предупреждение
+    assert "Попытка добавить строку вместо продукта" in caplog.text
+
+    # Проверяем, что количество продуктов в категории не изменилось
     assert len(category.products) == 0
 
 
@@ -422,3 +438,630 @@ def test_category_product_list_edge_cases() -> None:
 
     expected_different_prices = "Смартфон, 1000.0 руб. Остаток: 5 шт.\nСмартфон, 1500.0 руб. Остаток: 3 шт."
     assert different_price_category.product_list == expected_different_prices
+
+
+def test_smartphone_initialization() -> None:
+    """Тест инициализации смартфона с полными данными."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Новый смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+
+    assert smartphone.name == "iPhone 13"
+    assert smartphone.description == "Новый смартфон"
+    assert smartphone.price == 1000.0
+    assert smartphone.quantity == 5
+    assert smartphone.efficiency == 0.9
+    assert smartphone.model == "Pro Max"
+    assert smartphone.memory == 256
+    assert smartphone.color == "Silver"
+
+
+def test_smartphone_add_method() -> None:
+    """Тест метода сложения для смартфонов."""
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+    smartphone2 = Smartphone(
+        name="Samsung Galaxy",
+        description="Смартфон 2",
+        price=800.0,
+        quantity=3,
+        efficiency=0.8,
+        model="S21",
+        memory=128,
+        color="Black",
+    )
+
+    total_value = smartphone1 + smartphone2
+    expected_value = 1000.0 * 5 * 0.9 + 800.0 * 3 * 0.8
+    assert total_value == expected_value
+
+
+def test_smartphone_str_method() -> None:
+    """Тест строкового представления смартфона."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Новый смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+
+    assert str(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
+
+
+def test_smartphone_repr_method() -> None:
+    """Тест представления смартфона для отладки."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Новый смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+
+    assert repr(smartphone) == "iPhone 13, 1000.0 руб. Остаток: 5 шт."
+
+
+def test_lawn_grass_initialization() -> None:
+    """Тест инициализации газонной травы с полными данными."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава 'Западлютик'",
+        description="Ароматная трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    assert lawn_grass.name == "Газонная трава 'Западлютик'"
+    assert lawn_grass.description == "Ароматная трава"
+    assert lawn_grass.price == 500.0
+    assert lawn_grass.quantity == 10
+    assert lawn_grass.country == "Россия"
+    assert lawn_grass.germination_period == "7-10 дней"
+    assert lawn_grass.color == "Зеленый"
+
+
+def test_lawn_grass_add_method() -> None:
+    """Тест метода сложения для газонной травы."""
+    lawn_grass1 = LawnGrass(
+        name="Газонная трава 'Батька'",
+        description="Быстрорастущая трава 1",
+        price=500.0,
+        quantity=10,
+        country="Беларусь",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+    lawn_grass2 = LawnGrass(
+        name="Газонная трава Премиум",
+        description="Быстрорастущая трава 2",
+        price=600.0,
+        quantity=5,
+        country="Беларусь",
+        germination_period="5-7 дней",
+        color="Темно-зеленый",
+    )
+
+    total_value = lawn_grass1 + lawn_grass2
+    expected_value = 500.0 * 10 + 600.0 * 5
+    assert total_value == expected_value
+
+
+def test_lawn_grass_str_method() -> None:
+    """Тест строкового представления газонной травы."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава для России",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="5-10 дней",
+        color="Зеленый",
+    )
+
+    assert str(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 10 шт."
+
+
+def test_lawn_grass_repr_method() -> None:
+    """Тест представления газонной травы для отладки."""
+    lawn_grass = LawnGrass(
+        name="Газонная трава для России",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    assert repr(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 10 шт."
+
+
+def test_lawn_grass_add_method_different_types() -> None:
+    """Тест сложения газонной травы разных типов."""
+
+    class CustomLawnGrass(LawnGrass):
+        pass
+
+    lawn_grass1 = LawnGrass(
+        name="Газонная трава Элита",
+        description="Быстрорастущая трава 1",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+    custom_lawn_grass = CustomLawnGrass(
+        name="Рандомная трава",
+        description="Рандомная трава",
+        price=400.0,
+        quantity=7,
+        country="Россия",
+        germination_period="10-14 дней",
+        color="Салатовый",
+    )
+
+    with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
+        lawn_grass1 + custom_lawn_grass
+
+
+def test_smartphone_add_method_different_types() -> None:
+    """Тест сложения смартфонов разных типов."""
+
+    class CustomSmartphone(Smartphone):
+        pass
+
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+    custom_smartphone = CustomSmartphone(
+        name="Custom Phone",
+        description="Кастомный смартфон",
+        price=800.0,
+        quantity=3,
+        efficiency=0.8,
+        model="Custom",
+        memory=128,
+        color="Black",
+    )
+
+    with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
+        smartphone1 + custom_smartphone
+
+
+def test_add_method_different_product_types() -> None:
+    """Тест сложения продуктов разных классов."""
+    smartphone = Smartphone(
+        name="iPhone 13",
+        description="Смартфон",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+    lawn_grass = LawnGrass(
+        name="Газонная трава Элита",
+        description="Быстрорастущий бурьян для соседей",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="голубой",
+    )
+
+    with pytest.raises(TypeError, match="Нельзя складывать товары разных типов"):
+        smartphone + lawn_grass
+
+
+def test_add_method_error_message_content() -> None:
+    """Проверка точного содержания сообщения об ошибке."""
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+    lawn_grass = LawnGrass(
+        name="Газонная трава Скороспелка",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Белорусь",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    with pytest.raises(TypeError) as excinfo:
+        smartphone1 + lawn_grass
+
+    assert str(excinfo.value) == "Нельзя складывать товары разных типов: 'Smartphone' и 'LawnGrass'"
+
+
+def test_add_method_logging() -> None:
+    """Проверка логирования при попытке сложения разных типов."""
+    smartphone1 = Smartphone(
+        name="iPhone 13",
+        description="Смартфон 1",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Pro Max",
+        memory=256,
+        color="Silver",
+    )
+    lawn_grass = LawnGrass(
+        name="Газонная трава 'Финн'",
+        description=" медленнорастущая трава",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый",
+    )
+
+    with patch("src.models.logger.error") as mock_logger_error:
+        with pytest.raises(TypeError):
+            smartphone1 + lawn_grass
+
+        mock_logger_error.assert_called_once_with(
+            f"Нельзя складывать товары разных типов: '{type(smartphone1).__name__}' и '{type(lawn_grass).__name__}'"
+        )
+
+
+def test_add_product_with_none(caplog: Any) -> None:
+    """
+    Тест добавления None в категорию.
+    """
+    category = Category("Электроника", "Описание")
+
+    with pytest.raises(ValueError) as excinfo:
+        category.add_product(None)
+
+    # Проверяем текст исключения
+    assert f"Ошибка при добавлении продукта в категорию '{category.name}'" in str(excinfo.value)
+
+    # Проверяем, что была залоггирована ошибка
+    assert "Ошибка при добавлении продукта" in caplog.text
+
+    # Проверяем, что количество продуктов в категории не изменилось
+    assert len(category.products) == 0
+
+
+def test_category_iterator_iter_method() -> None:
+    """
+    Тест метода __iter__ в CategoryIterator.
+    Проверяет, что метод возвращает сам объект итератора.
+    """
+    category = Category("Электроника", "Описание")
+    product1 = Product("Смартфон", "Описание", 1000.0, 5)
+    product2 = Product("Планшет", "Описание", 500.0, 3)
+
+    category.add_product(product1)
+    category.add_product(product2)
+
+    iterator = CategoryIterator(category)
+
+    # Проверяем, что __iter__ возвращает сам объект итератора
+    assert iterator.__iter__() is iterator
+
+
+def test_print_info_mixin_repr_method() -> None:
+    """
+    Тест метода __repr__ в PrintInfoMixin.
+    Проверяет корректность формирования строки repr.
+    """
+
+    class TestProduct(PrintInfoMixin, Product):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            super().__init__(name, description, price, quantity)
+
+    product = TestProduct("Тестовый продукт", "Описание", 100.0, 10)
+
+    # Проверяем, что repr содержит имя класса и стандартное строковое представление
+    assert "Объект класса TestProduct" in repr(product)
+    assert "Тестовый продукт, 100.0 руб. Остаток: 10 шт." in repr(product)
+
+
+def test_base_product_price_property_implementation() -> None:
+    """
+    Тест корректной реализации свойства price в конкретном классе.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    # Проверяем, что свойство price работает корректно
+    assert product.price == 100.0
+
+    # Проверяем логирование при получении цены
+    with patch("src.models.logger.debug") as mock_logger_debug:
+        _ = product.price
+        mock_logger_debug.assert_called_once_with("Получение цены для продукта 'Тестовый продукт'. "
+                                                  "Текущая цена: 100.0")
+
+
+def test_base_product_add_method_implementation() -> None:
+    """
+    Тест корректной реализации метода __add__ в конкретном классе.
+    """
+    product1 = Product("Продукт 1", "Описание", 50.0, 5)
+    product2 = Product("Продукт 2", "Описание", 100.0, 3)
+
+    # Проверяем, что метод __add__ работает корректно
+    total_value = product1 + product2
+    assert total_value == 550.0  # 50 * 5 + 100 * 3
+
+    # Проверяем логирование при сложении
+    with patch("src.models.logger.info") as mock_logger_info:
+        product1 + product2
+        mock_logger_info.assert_called_once_with(
+            f"Выполнено сложение товаров: {product1.name} и {product2.name}. Общая стоимость: 550.0"
+        )
+
+
+def test_base_product_add_method_signature() -> None:
+    """
+    Тест сигнатуры метода __add__.
+    Проверяет корректность типов аргументов и возвращаемого значения.
+    """
+    from typing import get_type_hints
+
+    type_hints = get_type_hints(BaseProduct.__add__)
+
+    assert type_hints["other"] == BaseProduct
+    assert type_hints["return"] == float
+
+
+def test_base_product_add_method_documentation() -> None:
+    """
+    Тест документации абстрактного метода __add__.
+    Проверяет наличие и не пустые строки документации.
+    """
+    assert BaseProduct.__add__.__doc__ is not None
+    assert len(BaseProduct.__add__.__doc__.strip()) > 0
+
+
+def test_base_product_str_method_comprehensive() -> None:
+    """
+    Общий тест для абстрактного метода __str__ в BaseProduct.
+    Проверяет невозможность создания экземпляра, требование реализации метода в наследниках
+    и корректность его работы.
+    """
+    # Проверка невозможности создания экземпляра абстрактного класса
+    with pytest.raises(TypeError) as excinfo:
+        # Создаем анонимный подкласс без реализации абстрактных методов
+        type(
+            "FailedProduct",
+            (BaseProduct,),
+            {
+                "__init__": lambda self, name, description, price, quantity: None,
+                "price": property(lambda self: 0.0),
+                "__add__": lambda self, other: 0.0,
+            },
+        )()
+
+    # Проверяем, что сообщение об ошибке содержит нужную информацию
+    assert "Can't instantiate abstract class" in str(excinfo.value)
+    assert "__str__" in str(excinfo.value)
+
+    # Проверка требования реализации метода в наследниках
+    class IncompleteProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            raise NotImplementedError("Метод __add__ не реализован")
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    # Теперь создание экземпляра должно быть возможным, так как __str__ реализован
+    product = IncompleteProduct("Тестовый продукт", "Описание", 100.0, 10)
+    assert str(product) == "Тестовый продукт, 100.0 руб."
+
+    # Проверка корректности работы __str__ в наследнике
+    class TestProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            raise NotImplementedError("Метод __add__ не реализован")
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    test_product = TestProduct("Тестовый продукт", "Описание", 100.0, 10)
+    assert isinstance(str(test_product), str)
+    assert str(test_product) == "Тестовый продукт, 100.0 руб."
+
+    # Проверка атрибутов абстрактного метода
+    assert hasattr(BaseProduct, "__str__"), "BaseProduct должен иметь метод __str__"
+    assert callable(getattr(BaseProduct, "__str__", None)), "__str__ должен быть методом"
+    assert hasattr(BaseProduct.__str__, "__isabstractmethod__"), "__str__ должен быть абстрактным методом"
+
+
+def test_base_product_str_method_documentation() -> None:
+    """
+    Тест документации абстрактного метода __str__.
+    """
+    assert BaseProduct.__str__.__doc__ is not None
+    assert len(BaseProduct.__str__.__doc__.strip()) > 20
+    assert "Returns" in BaseProduct.__str__.__doc__
+    assert "str:" in BaseProduct.__str__.__doc__
+
+
+def test_base_product_str_method_type_hints() -> None:
+    """
+    Тест сигнатуры и типов возвращаемого значения метода __str__.
+    """
+    from typing import get_type_hints
+
+    type_hints = get_type_hints(BaseProduct.__str__)
+    assert type_hints["return"] == str
+
+
+def test_base_product_incomplete_class_methods() -> None:
+    """
+    Тест методов неполного класса продукта.
+    """
+
+    class IncompleteProduct(BaseProduct):
+        def __init__(self, name: str, description: str, price: float, quantity: int):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __add__(self, other: "BaseProduct") -> float:
+            # Просто заглушка для теста
+            return 0.0
+
+        def __str__(self) -> str:
+            return f"{self.name}, {self.price} руб."
+
+    # Проверяем, что методы вызываются без ошибок
+    product = IncompleteProduct("Тестовый продукт", "Описание", 100.0, 10)
+
+    assert product.price == 100.0
+    assert str(product) == "Тестовый продукт, 100.0 руб."
+    assert product.__add__(product) == 0.0
+
+
+def test_container_str_methods() -> None:
+    """
+    Тест методов __str__ в тестовых классах контейнеров.
+    """
+
+    class TestContainer1(BaseContainer):
+        def __str__(self) -> str:
+            return "Test Container 1"
+
+    class TestContainer2(BaseContainer):
+        def __str__(self) -> str:
+            return "Test Container 2"
+
+    container1 = TestContainer1("Контейнер 1", "Описание 1")
+    container2 = TestContainer2("Контейнер 2", "Описание 2")
+
+    assert str(container1) == "Test Container 1"
+    assert str(container2) == "Test Container 2"
+
+    # Тест успешной инициализации заказа.
+
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    order = Order("Тестовый заказ", "Описание заказа", product, 5)
+
+    assert order.name == "Тестовый заказ"
+    assert order.description == "Описание заказа"
+    assert order.product == product
+    assert order.quantity == 5
+    assert product.quantity == 5  # Количество товара уменьшилось
+
+
+def test_order_initialization_with_zero_quantity() -> None:
+    """
+    Тест инициализации заказа с нулевым количеством.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        Order("Тестовый заказ", "Описание заказа", product, 0)
+
+
+def test_order_initialization_with_negative_quantity() -> None:
+    """
+    Тест инициализации заказа с отрицательным количеством.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        Order("Тестовый заказ", "Описание заказа", product, -5)
+
+
+def test_order_initialization_with_insufficient_product_quantity() -> None:
+    """
+    Тест инициализации заказа с количеством, превышающим доступное количество товара.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 5)
+
+    with pytest.raises(ValueError, match=r"Недостаточно товара на складе\. Запрошено: 10, доступно: 5"):
+        Order("Тестовый заказ", "Описание заказа", product, 10)
+
+
+def test_order_initialization_logging() -> None:
+    """
+    Тест логирования при создании заказа.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+
+    with patch("src.models.logger.info") as mock_logger_info:
+        Order("Тестовый заказ", "Описание заказа", product, 5)
+
+        mock_logger_info.assert_called_once_with(f"Создан заказ: Тестовый заказ, товар: {product.name}, количество: 5")
+
+
+def test_order_initialization_multiple_orders() -> None:
+    """
+    Тест создания нескольких заказов с одним и тем же продуктом.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 20)
+
+    order1 = Order("Заказ 1", "Описание заказа 1", product, 5)
+    order2 = Order("Заказ 2", "Описание заказа 2", product, 7)
+
+    assert order1.quantity == 5
+    assert order2.quantity == 7
+    assert product.quantity == 8  # 20 - 5 - 7
