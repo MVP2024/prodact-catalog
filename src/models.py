@@ -5,6 +5,42 @@ from typing import Any, Dict, List, Optional, Union
 
 from src.logger import setup_logger
 
+
+class ProductZeroQuantityError(ValueError):
+    """
+        Пользовательское исключение для товаров с нулевым количеством.
+
+        Attrs:
+            message (str): Сообщение об ошибке.
+        """
+    def __init__(self, message: str = "Товар с нулевым количеством не может быть добавлен"):
+        self.message = message
+        super().__init__(self.message)
+
+    def process_product(product):
+        """
+            Функция для обработки продукта с возможностью вызова исключения.
+
+            Args:
+                product (Product): Продукт для обработки.
+
+            Raises:
+                ProductWithZeroQuantityError: Если количество товара равно нулю.
+            """
+        try:
+            if product.quantity == 0:
+                raise ProductZeroQuantityError(f"Товар '{product.name}' имеет нулевое количество")
+
+            # Дополнительная логика обработки продукта
+            print(f"Продукт '{product.name}' обработан успешно")
+
+        except ProductZeroQuantityError as e:
+            print(f"Предупреждение: {e.message}")
+
+        finally:
+            print("Обработка продукта завершена")
+
+
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
 
