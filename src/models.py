@@ -1,6 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
+from itertools import product
 from typing import Any, Dict, List, Optional, Union
+
+from src.logger import setup_logger
 
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
@@ -218,7 +221,14 @@ class Product(BaseProduct):
             description (str): Описание продукта.
             price (float): Цена продукта.
             quantity (int): Количество продукта в наличии.
+
+        :raises
+            ValueError: Если количество товара равно нулю.
         """
+        # Проверка количества перед инициализаией
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+
         self.name = name
         self.description = description
         self._price = price
@@ -534,6 +544,29 @@ class Category(BaseContainer):
         )
 
         return result
+
+    def middle_price(self) -> float:
+        """
+        Вычисляет средний ценник всехх товаров в категории.
+
+        :return:
+            Float: Средняя цена товаров в категории или же равна 0, если товаров нет.
+        """
+        try:
+            # Вычисляем сумму цен всех товаров
+            total_price = sum(product.price for product in self._products )
+
+            # Делим сумму цен на количество товаров
+            average_price = total_price / len(self._products)
+
+            logger.info(f"Вычислена средняя цена для категории '{self.name}': {average_price}")
+
+            return average_price
+        except ZeroDivisionError:
+            # Обработка случая, когда в категории нет товаров
+            logger.warning(f"Категория '{self.name}' не содержит товаров")
+            return 0.0
+
 
     # Свойства
     @property
