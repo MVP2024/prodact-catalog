@@ -12,7 +12,7 @@ from src.models import (
     Order,
     PrintInfoMixin,
     Product,
-    Smartphone,
+    Smartphone, ProductZeroQuantityError,
 )
 
 
@@ -172,13 +172,12 @@ def test_product_add_method_total_value() -> None:
     assert product1 + product2 == 550.0  # 50 * 5 + 100 * 3
 
 
-def test_create_product_with_empty_dict() -> None:
-    """Тест создания продукта с пустым словарем."""
-    result = Product.create_product({})
-    assert result.name == ""
-    assert result.description == ""
-    assert result.price == 0.0
-    assert result.quantity == 0
+def test_create_product_with_zero_quantity():
+    """Тест создания продукта с нулевым количеством."""
+    product = Product("Продукт", "Описание", 100.0, 0, allow_zero=True)
+
+    assert product.name == "Продукт"
+    assert product.quantity == 0
 
 
 def test_category_iterator_empty_no_exception() -> None:
@@ -369,6 +368,14 @@ def test_product_new_method_invalid_types() -> None:
     assert str(product.name) == "123"  # Преобразование числа в строку
     assert str(product.description) == "456"  # Преобразование числа в строку
     assert product.price == 0.0  # Некорректная цена заменена на 0.0
+    assert product.quantity == 0  # Некорректное количество заменено на 0
+
+    # Дополнительно проверяем, что продукт создан с allow_zero=True
+    try:
+        # Попытка создания продукта с нулевым количеством не должна вызывать исключение
+        Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+    except ValueError:
+        pytest.fail("Создание продукта с нулевым количеством должно быть разрешено")
 
 
 def test_product_new_method_with_mixed_none_and_valid_values() -> None:
@@ -409,12 +416,13 @@ def test_category_iterator_empty_iteration() -> None:
 
 def test_add_method_with_zero_quantity_products() -> None:
     """Проверка метода сложения продуктов с нулевым количеством."""
-    product1 = Product("Продукт 1", "Описание", 50.0, 0)
-    product2 = Product("Продукт 2", "Описание", 100.0, 0)
+    product1 = Product("Продукт 1", "Описание", 50.0, 0, allow_zero=True)
+    product2 = Product("Продукт 2", "Описание", 100.0, 0, allow_zero=True)
 
     total_value = product1 + product2
 
     assert total_value == 0.0
+
 
 
 def test_category_product_list_edge_cases() -> None:
@@ -1065,3 +1073,115 @@ def test_order_initialization_multiple_orders() -> None:
     assert order1.quantity == 5
     assert order2.quantity == 7
     assert product.quantity == 8  # 20 - 5 - 7
+
+
+# Тесты для покрытия ProductZeroQuantityError
+def test_product_zero_quantity_error_validate_method_additional_cases():
+    """
+    Расширенный тест статического метода validate с дополнительными сценариями.
+    """
+    # Тест на успешную валидацию с различными положительными значениями
+    test_cases = [1, 10, 100, 1000]
+    for quantity in test_cases:
+        assert ProductZeroQuantityError.validate("Тестовый продукт", quantity) is True
+
+
+def test_product_zero_quantity_error_validate_method_print_output(capsys):
+    """
+    Тест вывода сообщений в методе validate.
+    """
+    # Тест успешной валидации
+    ProductZeroQuantityError.validate("Тестовый продукт", 5)
+    captured = capsys.readouterr()
+    assert "Товар 'Тестовый продукт' успешно прошел валидацию" in captured.out
+    assert "Обработка добавления товара завершена" in captured.out
+
+
+def test_product_zero_quantity_error_validate_method_exception_handling():
+    """
+    Тест обработки исключений в методе validate.
+    """
+    # Тест на корректность обработки исключений
+    with pytest.raises(ValueError, match="Количество товара 'Тестовый продукт' не может быть отрицательным"):
+        ProductZeroQuantityError.validate("Тестовый продукт", -1)
+
+    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
+        ProductZeroQuantityError.validate("Тестовый продукт", 0)
+
+
+def test_product_zero_quantity_error_custom_message():
+    """
+    Тест создания исключения с полностью пользовательским сообщением.
+    """
+    custom_message = "Извините, но товар не может быть добавлен с нулевым количеством"
+    error = ProductZeroQuantityError(custom_message)
+
+    assert str(error) == custom_message
+    assert error.message == custom_message
+
+
+def test_product_zero_quantity_error_type_checking():
+    """
+    Тест проверки типов в методе validate.
+    """
+    # Проверка обработки некорректных типов
+    with pytest.raises(TypeError, match="Название продукта должно быть строкой"):
+        ProductZeroQuantityError.validate(123, 5)
+
+    with pytest.raises(TypeError, match="Количество должно быть целым числом"):
+        ProductZeroQuantityError.validate("Продукт", "не число")
+
+    with pytest.raises(TypeError, match="Название продукта должно быть строкой"):
+        ProductZeroQuantityError.validate(None, 5)
+
+
+def test_product_zero_quantity_error_message_initialization():
+    """
+    Тест инициализации исключения с пользовательским сообщением.
+    """
+    # Тест с сообщением по умолчанию
+    error1 = ProductZeroQuantityError()
+    assert str(error1) == "Товар с нулевым количеством не может быть добавлен"
+    assert error1.message == "Товар с нулевым количеством не может быть добавлен"
+
+    # Тест с пользовательским сообщением
+    custom_message = "Специальное сообщение об ошибке"
+    error2 = ProductZeroQuantityError(custom_message)
+    assert str(error2) == custom_message
+    assert error2.message == custom_message
+
+def test_product_zero_quantity_error_inheritance():
+    """
+    Тест наследования от ValueError и проверка корректности сообщения об ошибке.
+    """
+    # Проверяем, что класс наследуется от ValueError
+    assert issubclass(ProductZeroQuantityError, ValueError)
+
+    # Тест создания исключения и проверка, что оно работает как ValueError
+    with pytest.raises(ProductZeroQuantityError) as excinfo:
+        raise ProductZeroQuantityError("Тестовое сообщение")
+
+    assert "Тестовое сообщение" in str(excinfo.value)
+
+def test_product_zero_quantity_error_str_method():
+    """
+    Тест метода __str__ для исключения.
+    """
+    # Проверяем, что метод __str__ возвращает корректное сообщение
+    error = ProductZeroQuantityError("Особое сообщение об ошибке")
+    assert str(error) == "Особое сообщение об ошибке"
+
+def test_product_zero_quantity_error_validate_method():
+    """
+    Тест статического метода validate.
+    """
+    # Тест на успешную валидацию
+    assert ProductZeroQuantityError.validate("Тестовый продукт", 5) is True
+
+    # Тест на ошибку с отрицательным количеством
+    with pytest.raises(ValueError, match="Количество товара 'Тестовый продукт' не может быть отрицательным"):
+        ProductZeroQuantityError.validate("Тестовый продукт", -1)
+
+    # Тест на ошибку с нулевым количеством
+    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
+        ProductZeroQuantityError.validate("Тестовый продукт", 0)
