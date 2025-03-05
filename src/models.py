@@ -31,8 +31,16 @@ class ProductZeroQuantityError(ValueError):
             quantity (int): Количество продукта.
 
         Raises:
-            ProductZeroQuantityError: Если количество товара равно нулю.
+            TypeError: Если переданы некорректные типы.
+            ValueError: Если количество товара некорректное.
         """
+        # Проверка типов входных данных
+        if not isinstance(name, str):
+            raise TypeError(f"Название продукта должно быть строкой, получено: {type(name)}")
+
+        if not isinstance(quantity, int):
+            raise TypeError(f"Количество должно быть целым числом, получено: {type(quantity)}")
+
         try:
             if quantity < 0:
                 raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
@@ -50,6 +58,8 @@ class ProductZeroQuantityError(ValueError):
 
         finally:
             print("Обработка добавления товара завершена")
+
+
 
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
@@ -777,6 +787,7 @@ class LawnGrass(PrintInfoMixin, Product):
         country: str,
         germination_period: str,
         color: str,
+        allow_zero: bool = False  # Добавляем параметр по умолчанию
     ):
         """
         Инициализирует газонную траву с дополнительными характеристиками.
@@ -788,8 +799,9 @@ class LawnGrass(PrintInfoMixin, Product):
             country (str): Страна-производитель.
             germination_period (str): Срок прорастания.
             color (str): Цвет травы.
+            allow_zero (bool, optional): Разрешить нулевое количество. По умолчанию False.
         """
-        super().__init__(name, description, price, quantity)
+        super().__init__(name, description, price, quantity, allow_zero)
         self.country = country
         self.germination_period = germination_period
         self.color = color
