@@ -1255,3 +1255,280 @@ def test_category_middle_price_empty_category_logging():
         mock_logger_warning.assert_called_once_with(
             f"Категория '{category.name}' не содержит товаров"
         )
+
+# Добавлены тесты для метода __repr__ в классе LawnGrass
+def test_lawn_grass_repr_method_with_zero_quantity():
+    """
+    Тест представления газонной травы с нулевым количеством для отладки.
+    """
+    lawn_grass = LawnGrass(
+        name="Газонная трава для России",
+        description="Быстрорастущая трава",
+        price=500.0,
+        quantity=0,
+        country="Россия",
+        germination_period="5-10 дней",
+        color="Зеленый",
+        allow_zero=True
+    )
+
+    assert repr(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 0 шт."
+
+
+def test_lawn_grass_repr_method_with_special_characters():
+    """
+    Тест представления газонной травы с специальными символами в названии.
+    """
+    lawn_grass = LawnGrass(
+        name="Газонная трава 'Элита'",
+        description="Быстрорастущая трава",
+        price=750.50,
+        quantity=15,
+        country="Россия",
+        germination_period="7-14 дней",
+        color="Темно-зеленый",
+    )
+
+    assert repr(lawn_grass) == "Газонная трава 'Элита', 750.5 руб. Остаток: 15 шт."
+
+
+def test_lawn_grass_repr_method_type_consistency():
+    """
+    Тест для согласованности типов в представлении газонной травы.
+    """
+    lawn_grass = LawnGrass(
+        name="Газонная трава Премиум",
+        description="Быстрорастущая трава",
+        price=1000.0,
+        quantity=20,
+        country="Россия",
+        germination_period="5-7 дней",
+        color="Зеленый",
+    )
+
+    repr_result = repr(lawn_grass)
+
+    # Проверяем формат представления
+    assert isinstance(repr_result, str)
+    assert "," in repr_result
+    assert "руб." in repr_result
+    assert "Остаток:" in repr_result
+
+
+def test_lawn_grass_repr_method_inheritance():
+    """
+    Тест наследования и переопределения метода __repr__.
+    """
+
+    class CustomLawnGrass(LawnGrass):
+        def __repr__(self) -> str:
+            return f"Обычная {super().__repr__()}"
+
+    custom_lawn_grass = CustomLawnGrass(
+        name="Специальная трава",
+        description="Уникальная трава",
+        price=600.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Салатовый",
+    )
+
+    assert repr(custom_lawn_grass) == "Обычная Специальная трава, 600.0 руб. Остаток: 10 шт."
+
+# add_product для класса Product
+
+def test_add_product_with_non_product_object(caplog):
+    """
+    Тест добавления объекта, не являющегося Product, в категорию.
+    """
+    category = Category("Электроника", "Описание")
+
+    class CustomObject:
+        pass
+
+    non_product_object = CustomObject()
+
+    with pytest.raises(TypeError) as excinfo:
+        category.add_product(non_product_object)
+
+    # Проверяем текст исключения
+    assert f"В категорию можно добавлять только продукты. Получен объект типа: {type(non_product_object).__name__}" in str(excinfo.value)
+
+    # Проверяем логирование ошибки
+    assert "В категорию можно добавлять только продукты" in caplog.text
+    assert type(non_product_object).__name__ in caplog.text
+
+    # Проверяем, что количество продуктов в категории не изменилось
+    assert len(category.products) == 0
+
+def test_add_product_with_inherited_product_type():
+    """
+    Тест добавления объекта, унаследованного от Product.
+    """
+    category = Category("Электроника", "Описание")
+
+    class CustomProduct(Product):
+        pass
+
+    custom_product = CustomProduct("Кастомный продукт", "Описание", 100.0, 5)
+    category.add_product(custom_product)
+
+    # Проверяем, что продукт добавлен в категорию
+    assert len(category.products) == 1
+    assert category.products[0] == custom_product
+
+def test_add_product_with_different_inherited_types():
+    """
+    Тест добавления объектов разных дочерних классов.
+    """
+    category = Category("Электроника", "Описание")
+
+    class CustomSmartphone(Smartphone):
+        pass
+
+    class CustomLawnGrass(LawnGrass):
+        pass
+
+    smartphone = CustomSmartphone(
+        name="Однокнопочный смартфон",
+        description="Описание",
+        price=1000.0,
+        quantity=5,
+        efficiency=0.9,
+        model="Тестовый",
+        memory=128,
+        color="Черный"
+    )
+
+    lawn_grass = CustomLawnGrass(
+        name="Не вкусная трава",
+        description="Описание",
+        price=500.0,
+        quantity=10,
+        country="Россия",
+        germination_period="7-10 дней",
+        color="Зеленый"
+    )
+
+    # Каждый объект должен добавляться корректно
+    category.add_product(smartphone)
+    category.add_product(lawn_grass)
+
+    assert len(category.products) == 2
+    assert category.products[0] == smartphone
+    assert category.products[1] == lawn_grass
+
+
+# тесты для def __init__ класса Product
+def test_product_initialization_with_zero_quantity_allowed():
+    """
+    Тест инициализации продукта с нулевым количеством при allow_zero=True.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+
+    assert product.name == "Тестовый продукт"
+    assert product.quantity == 0
+
+
+def test_product_initialization_with_zero_quantity_not_allowed():
+    """
+    Тест инициализации продукта с нулевым количеством при allow_zero=False.
+    """
+    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
+        Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
+
+
+def test_product_initialization_with_zero_quantity_default():
+    """
+    Тест инициализации продукта с нулевым количеством по умолчанию (allow_zero=False).
+    """
+    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
+        Product("Тестовый продукт", "Описание", 100.0, 0)
+
+
+def test_product_initialization_with_negative_quantity():
+    """
+    Тест инициализации продукта с отрицательным количеством.
+    """
+    with pytest.raises(ValueError, match="Количество товара 'Тестовый продукт' не может быть отрицательным"):
+        Product("Тестовый продукт", "Описание", 100.0, -1)
+
+
+def test_product_initialization_with_different_allow_zero_values():
+    """
+    Тест инициализации продуктов с разными значениями allow_zero.
+    """
+    # Разрешено нулевое количество
+    product1 = Product("Продукт 1", "Описание", 100.0, 0, allow_zero=True)
+    assert product1.quantity == 0
+
+    # Не разрешено нулевое количество
+    with pytest.raises(ValueError):
+        Product("Продукт 2", "Описание", 100.0, 0, allow_zero=False)
+
+
+def test_product_initialization_logging_with_zero_quantity():
+    """
+    Тест логирования при инициализации продукта с нулевым количеством.
+    """
+    with patch("src.models.logger.info") as mock_logger_info:
+        product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+
+        mock_logger_info.assert_called_once_with("Создан продукт: Тестовый продукт")
+
+
+def test_product_initialization_with_zero_quantity_in_category():
+    """
+    Тест добавления продукта с нулевым количеством в категорию.
+    """
+    category = Category("Электроника", "Описание")
+
+    # Продукт с нулевым количеством, но с разрешением
+    product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+    category.add_product(product)
+
+    assert len(category.products) == 1
+    assert category.products[0] == product
+
+
+# тесты для def __init__ класса Product
+def test_product_initialization_with_zero_quantity_allowed():
+    """
+    Тест инициализации продукта с нулевым количеством при allow_zero=True.
+    """
+    product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+
+    assert product.name == "Тестовый продукт"
+    assert product.quantity == 0
+    assert product.price == 100.0
+
+
+
+def test_product_initialization_with_zero_quantity_default():
+    """
+    Тест инициализации продукта с нулевым количеством по умолчанию (allow_zero=False).
+    """
+    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
+        Product("Тестовый продукт", "Описание", 100.0, 0)
+
+
+def test_product_initialization_logging_without_zero_quantity():
+    """
+    Тест логирования при инициализации продукта с ненулевым количеством.
+    """
+    with patch("src.models.logger.info") as mock_logger_info:
+        product = Product("Тестовый продукт", "Описание", 100.0, 5)
+
+        mock_logger_info.assert_called_once_with("Создан продукт: Тестовый продукт")
+
+
+def test_product_initialization_logging_zero_quantity_not_allowed():
+    """
+    Тест отсутствия логирования при попытке создания продукта с нулевым количеством.
+    """
+    with patch("src.models.logger.info") as mock_logger_info:
+        with pytest.raises(ValueError):
+            Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
+
+        mock_logger_info.assert_not_called()
