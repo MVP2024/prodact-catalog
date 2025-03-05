@@ -272,6 +272,7 @@ class Product(BaseProduct):
         Raises:
             ValueError: Если количество товара равно нулю и allow_zero=False.
         """
+
         if quantity < 0:
             raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
 
