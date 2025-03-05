@@ -1185,3 +1185,73 @@ def test_product_zero_quantity_error_validate_method():
     # Тест на ошибку с нулевым количеством
     with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
         ProductZeroQuantityError.validate("Тестовый продукт", 0)
+
+# Тесты  тесты для метода middle_price()
+def test_category_middle_price_with_products():
+    """
+    Тест вычисления средней цены для категории с несколькими продуктами.
+    """
+    category = Category("Электроника", "Описание")
+    product1 = Product("Смартфон", "Описание", 1000.0, 5)
+    product2 = Product("Планшет", "Описание", 500.0, 3)
+
+    category.add_product(product1)
+    category.add_product(product2)
+
+    expected_average_price = (1000.0 + 500.0) / 2
+    assert category.middle_price() == expected_average_price
+
+
+def test_category_middle_price_with_single_product():
+    """
+    Тест вычисления средней цены для категории с одним продуктом.
+    """
+    category = Category("Электроника", "Описание")
+    product = Product("Смартфон", "Описание", 1000.0, 5)
+
+    category.add_product(product)
+
+    assert category.middle_price() == 1000.0
+
+
+def test_category_middle_price_with_no_products():
+    """
+    Тест вычисления средней цены для пустой категории.
+    """
+    category = Category("Электроника", "Описание")
+
+    assert category.middle_price() == 0.0
+
+
+def test_category_middle_price_logging():
+    """
+    Тест логирования при вычислении средней цены.
+    """
+    category = Category("Электроника", "Описание")
+    product1 = Product("Смартфон", "Описание", 1000.0, 5)
+    product2 = Product("Планшет", "Описание", 500.0, 3)
+
+    category.add_product(product1)
+    category.add_product(product2)
+
+    with patch("src.models.logger.info") as mock_logger_info:
+        category.middle_price()
+
+        expected_average_price = (1000.0 + 500.0) / 2
+        mock_logger_info.assert_called_once_with(
+            f"Вычислена средняя цена для категории '{category.name}': {expected_average_price}"
+        )
+
+
+def test_category_middle_price_empty_category_logging():
+    """
+    Тест логирования при вычислении средней цены для пустой категории.
+    """
+    category = Category("Электроника", "Описание")
+
+    with patch("src.models.logger.warning") as mock_logger_warning:
+        category.middle_price()
+
+        mock_logger_warning.assert_called_once_with(
+            f"Категория '{category.name}' не содержит товаров"
+        )
