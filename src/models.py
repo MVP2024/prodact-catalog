@@ -8,38 +8,48 @@ from src.logger import setup_logger
 
 class ProductZeroQuantityError(ValueError):
     """
-        Пользовательское исключение для товаров с нулевым количеством.
+    Пользовательское исключение для товаров с нулевым количеством.
 
-        Attrs:
-            message (str): Сообщение об ошибке.
-        """
+    Attrs:
+        message (str): Сообщение об ошибке.
+    """
+
     def __init__(self, message: str = "Товар с нулевым количеством не может быть добавлен"):
         self.message = message
-        super().__init__(self.message)
+        super().__init__(message)  # Важно передать message в родительский класс ValueError
 
-    def process_product(product):
+    def __str__(self):
+        return self.message
+
+    @classmethod
+    def validate(cls, name: str, quantity: int):
         """
-            Функция для обработки продукта с возможностью вызова исключения.
+        Статический метод для валидации количества продукта.
 
-            Args:
-                product (Product): Продукт для обработки.
+        Args:
+            name (str): Название продукта.
+            quantity (int): Количество продукта.
 
-            Raises:
-                ProductWithZeroQuantityError: Если количество товара равно нулю.
-            """
+        Raises:
+            ProductZeroQuantityError: Если количество товара равно нулю.
+        """
         try:
-            if product.quantity == 0:
-                raise ProductZeroQuantityError(f"Товар '{product.name}' имеет нулевое количество")
+            if quantity < 0:
+                raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
 
-            # Дополнительная логика обработки продукта
-            print(f"Продукт '{product.name}' обработан успешно")
+            if quantity == 0:
+                raise ValueError(f"Товар '{name}' с нулевым количеством не может быть добавлен")
+
+            else:
+                print(f"Товар '{name}' успешно прошел валидацию")
+            return True
 
         except ProductZeroQuantityError as e:
             print(f"Предупреждение: {e.message}")
+            return False
 
         finally:
-            print("Обработка продукта завершена")
-
+            print("Обработка добавления товара завершена")
 
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
@@ -248,7 +258,7 @@ class PrintInfoMixin:
 class Product(BaseProduct):
     """Класс, представляющий продукт."""
 
-    def __init__(self, name: str, description: str, price: float, quantity: int):
+    def __init__(self, name: str, description: str, price: float, quantity: int, allow_zero: bool = False):
         """
         Инициализирует продукт с заданными атрибутами.
 
@@ -257,13 +267,16 @@ class Product(BaseProduct):
             description (str): Описание продукта.
             price (float): Цена продукта.
             quantity (int): Количество продукта в наличии.
+            allow_zero (bool, optional): Разрешить нулевое количество. По умолчанию False.
 
-        :raises
-            ValueError: Если количество товара равно нулю.
+        Raises:
+            ValueError: Если количество товара равно нулю и allow_zero=False.
         """
-        # Проверка количества перед инициализаией
-        if quantity <= 0:
-            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+        if quantity < 0:
+            raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
+
+        if quantity == 0 and not allow_zero:
+            raise ValueError(f"Товар '{name}' с нулевым количеством не может быть добавлен")
 
         self.name = name
         self.description = description
@@ -397,6 +410,7 @@ class Product(BaseProduct):
             quantity=(
                 int(product_dict.get("quantity", 0)) if isinstance(product_dict.get("quantity"), (int, float)) else 0
             ),
+            allow_zero=True
         )
 
     @classmethod
