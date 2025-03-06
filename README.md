@@ -65,9 +65,9 @@ Product Catalog - это мощный инструмент управления 
 - logging
 
 ### Установка зависимостей через Poetry
-```
-    poetry install
-```
+  ```
+      poetry install
+  ```
 
 ## 📋 Требования к окружению
 - Python 3.10 или выше
@@ -77,16 +77,22 @@ Product Catalog - это мощный инструмент управления 
 ## 🔧 Настройка виртуального окружения
 
 ### Создание виртуального окружения с Poetry
-```
-    poetry env use python3.10
-    poetry shell
-```
+  ```
+      poetry env use python3.10
+  
+      poetry shell
+  ```
+
 ### Создание виртуального окружения с venv
-```
-    python3 -m venv venv
-    source venv/bin/activate  # Для Unix/macOS
-    venv\Scripts\activate     # Для Windows
-```
+  ```
+      python3 -m venv venv
+      
+      # Для Unix/macOS
+      source venv/bin/activate
+  
+       # Для Windows
+      venv\Scripts\activate
+  ```
 
 ## 🔧 Установка
 1. Клонируйте репозиторий:
@@ -94,16 +100,31 @@ Product Catalog - это мощный инструмент управления 
     git clone https://github.com/ваш-логин/ProductCatalog.git
     cd ProductCatalog
     ```
+   
 2. Установите зависимости:
-```
+    ```
+   # Установка Poetry
     pip install poetry
+   
+   # Установка зависимостей проекта
     poetry install
-```
+    ```
     или 
+
 3. Установка зависимостей через pip
-```
-    pip install -r requirements.txt
-```
+  ```
+      pip install -r requirements.txt
+  ```
+
+4. Первый запуск
+  ```
+      # Запуск тестов
+     poetry run pytest
+     
+     # Запуск основного скрипта
+     poetry run python src/main.py
+  
+  ```
 
 
 ## 💡 Использование
@@ -407,3 +428,7 @@ Product Catalog - это инновационный инструмент упр�
 - Высокая отказоустойчивость
 - Легкая интеграция в различные проекты
 - Автоматизация управления каталогом товаров
+
+
+### 👤 Контакты автора
+- GitHub: MVP2024
