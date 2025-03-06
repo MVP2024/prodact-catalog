@@ -1,9 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from itertools import product
 from typing import Any, Dict, List, Optional, Union
-
-from src.logger import setup_logger
 
 
 class ProductZeroQuantityError(ValueError):
@@ -58,7 +55,6 @@ class ProductZeroQuantityError(ValueError):
 
         finally:
             print("Обработка добавления товара завершена")
-
 
 
 # Добавляем настройку логгера
@@ -549,31 +545,23 @@ class Category(BaseContainer):
 
     # Методы работы с продуктами
     def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
-        # Проверка на None
         if product is None:
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}'"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        # Если передана строка, можно добавить дополнительную логику
         if isinstance(product, str):
             logger.warning(f"Попытка добавить строку вместо продукта: {product}")
             return
 
-        # Проверка на тип Product
         if not isinstance(product, Product):
             error_msg = f"В категорию можно добавлять только продукты. Получен объект типа: {type(product).__name__}"
             logger.error(error_msg)
             raise TypeError(error_msg)
 
-        try:
-            self._products.append(product)
-            Category._product_count += 1  # Увеличиваем счетчик продуктов
-            logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
-        except Exception as e:
-            error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        self._products.append(product)
+        Category._product_count += 1
+        logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
 
     # Магические методы
     def __iter__(self) -> "CategoryIterator":
@@ -608,14 +596,14 @@ class Category(BaseContainer):
 
     def middle_price(self) -> float:
         """
-        Вычисляет средний ценник всехх товаров в категории.
+        Вычисляет средний ценник всех товаров в категории.
 
         :return:
             Float: Средняя цена товаров в категории или же равна 0, если товаров нет.
         """
         try:
             # Вычисляем сумму цен всех товаров
-            total_price = sum(product.price for product in self._products )
+            total_price = sum(product.price for product in self._products)
 
             # Делим сумму цен на количество товаров
             average_price = total_price / len(self._products)
@@ -627,7 +615,6 @@ class Category(BaseContainer):
             # Обработка случая, когда в категории нет товаров
             logger.warning(f"Категория '{self.name}' не содержит товаров")
             return 0.0
-
 
     # Свойства
     @property
