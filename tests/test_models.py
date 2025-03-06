@@ -19,7 +19,7 @@ from src.models import (
 
 def test_product_price_setter_with_same_price() -> None:
     """Тест установки той же самой цены."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    product = Product("Просто какой-то продукт", "Описание", 100.0, 10)
 
     with (
         patch("builtins.input", return_value="n"),
@@ -60,7 +60,7 @@ def test_category_duplicate_product_list_property() -> None:
 
 def test_price_setter_with_zero_price() -> None:
     """Тест установки нулевой цены."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    product = Product("Просто какой-то продукт", "Описание", 100.0, 10)
 
     with (
         patch("builtins.input", return_value="n"),
@@ -75,7 +75,7 @@ def test_price_setter_with_zero_price() -> None:
 
 def test_price_setter_with_negative_price() -> None:
     """Тест установки отрицательной цены."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    product = Product("Просто какой-то продукт", "Описание", 100.0, 10)
 
     with (
         patch("builtins.input", return_value="n"),
@@ -90,7 +90,7 @@ def test_price_setter_with_negative_price() -> None:
 
 def test_price_setter_with_lower_price_cancellation() -> None:
     """Тест отмены понижения цены пользователем."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    product = Product("Просто какой-то продукт", "Описание", 100.0, 10)
 
     with (
         patch("builtins.input", return_value="n"),  # Пользователь отказывается от понижения
@@ -111,12 +111,12 @@ def test_price_setter_with_lower_price_cancellation() -> None:
 
 def test_create_product_with_none_list() -> None:
     """Тест создания продукта со списком None."""
-    product_dict = {"name": "Планшет", "description": "Новый планшет", "price": 500.0, "quantity": 10}
+    product_dict = {"name": "Планшет", "description": "Битый планшет", "price": 500.0, "quantity": 10}
 
     result = Product.create_product(product_dict, None)
 
     assert result.name == "Планшет"
-    assert result.description == "Новый планшет"
+    assert result.description == "Битый планшет"
     assert result.price == 500.0
     assert result.quantity == 10
 
@@ -156,14 +156,14 @@ def test_category_product_list_with_no_products() -> None:
 
 def test_product_str_method() -> None:
     """Тест строкового представления продукта."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
-    assert str(product) == "Тестовый продукт, 100.0 руб. Остаток: 10 шт."
+    product = Product("Просто продукт", "Описание", 100.0, 10)
+    assert str(product) == "Просто продукт, 100.0 руб. Остаток: 10 шт."
 
 
 def test_product_repr_method() -> None:
     """Тест представления продукта для отладки."""
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
-    assert repr(product) == "Тестовый продукт, 100.0 руб. Остаток: 10 шт."
+    product = Product("Краденый продукт", "Описание", 100.0, 10)
+    assert repr(product) == "Краденый продукт, 100.0 руб. Остаток: 10 шт."
 
 
 def test_product_add_method_total_value() -> None:
@@ -453,7 +453,7 @@ def test_smartphone_initialization() -> None:
     """Тест инициализации смартфона с полными данными."""
     smartphone = Smartphone(
         name="iPhone 13",
-        description="Новый смартфон",
+        description="Б/у смартфон",
         price=1000.0,
         quantity=5,
         efficiency=0.9,
@@ -463,7 +463,7 @@ def test_smartphone_initialization() -> None:
     )
 
     assert smartphone.name == "iPhone 13"
-    assert smartphone.description == "Новый смартфон"
+    assert smartphone.description == "Б/у смартфон"
     assert smartphone.price == 1000.0
     assert smartphone.quantity == 5
     assert smartphone.efficiency == 0.9
@@ -504,7 +504,7 @@ def test_smartphone_str_method() -> None:
     """Тест строкового представления смартфона."""
     smartphone = Smartphone(
         name="iPhone 13",
-        description="Новый смартфон",
+        description="Б/у смартфон",
         price=1000.0,
         quantity=5,
         efficiency=0.9,
@@ -520,7 +520,7 @@ def test_smartphone_repr_method() -> None:
     """Тест представления смартфона для отладки."""
     smartphone = Smartphone(
         name="iPhone 13",
-        description="Новый смартфон",
+        description="Смартфон из Китая",
         price=1000.0,
         quantity=5,
         efficiency=0.9,
@@ -655,8 +655,8 @@ def test_smartphone_add_method_different_types() -> None:
         color="Silver",
     )
     custom_smartphone = CustomSmartphone(
-        name="Custom Phone",
-        description="Кастомный смартфон",
+        name="The Best Phone",
+        description="Лучший смартфон",
         price=800.0,
         quantity=3,
         efficiency=0.8,
@@ -736,8 +736,8 @@ def test_add_method_logging() -> None:
         color="Silver",
     )
     lawn_grass = LawnGrass(
-        name="Газонная трава 'Финн'",
-        description=" медленнорастущая трава",
+        name="Газонная трава из Финляндии",
+        description="медленнорастущая трава",
         price=500.0,
         quantity=10,
         country="Россия",
@@ -801,18 +801,18 @@ def test_print_info_mixin_repr_method() -> None:
         def __init__(self, name: str, description: str, price: float, quantity: int):
             super().__init__(name, description, price, quantity)
 
-    product = TestProduct("Тестовый продукт", "Описание", 100.0, 10)
+    product = TestProduct("Весёлый продукт", "Описание", 100.0, 10)
 
     # Проверяем, что repr содержит имя класса и стандартное строковое представление
     assert "Объект класса TestProduct" in repr(product)
-    assert "Тестовый продукт, 100.0 руб. Остаток: 10 шт." in repr(product)
+    assert "Весёлый продукт, 100.0 руб. Остаток: 10 шт." in repr(product)
 
 
 def test_base_product_price_property_implementation() -> None:
     """
     Тест корректной реализации свойства price в конкретном классе.
     """
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
+    product = Product("Весёлый молочник", "Описание", 100.0, 10)
 
     # Проверяем, что свойство price работает корректно
     assert product.price == 100.0
@@ -820,7 +820,7 @@ def test_base_product_price_property_implementation() -> None:
     # Проверяем логирование при получении цены
     with patch("src.models.logger.debug") as mock_logger_debug:
         _ = product.price
-        mock_logger_debug.assert_called_once_with("Получение цены для продукта 'Тестовый продукт'. "
+        mock_logger_debug.assert_called_once_with("Получение цены для продукта 'Весёлый молочник'. "
                                                   "Текущая цена: 100.0")
 
 
@@ -982,10 +982,10 @@ def test_base_product_incomplete_class_methods() -> None:
             return f"{self.name}, {self.price} руб."
 
     # Проверяем, что методы вызываются без ошибок
-    product = IncompleteProduct("Тестовый продукт", "Описание", 100.0, 10)
+    product = IncompleteProduct("Весёлый продукт", "Описание", 100.0, 10)
 
     assert product.price == 100.0
-    assert str(product) == "Тестовый продукт, 100.0 руб."
+    assert str(product) == "Весёлый продукт, 100.0 руб."
     assert product.__add__(product) == 0.0
 
 
@@ -1010,10 +1010,10 @@ def test_container_str_methods() -> None:
 
     # Тест успешной инициализации заказа.
 
-    product = Product("Тестовый продукт", "Описание", 100.0, 10)
-    order = Order("Тестовый заказ", "Описание заказа", product, 5)
+    product = Product("Завтрашний продукт", "Описание", 100.0, 10)
+    order = Order("Завтрашний заказ", "Описание заказа", product, 5)
 
-    assert order.name == "Тестовый заказ"
+    assert order.name == "Завтрашний заказ"
     assert order.description == "Описание заказа"
     assert order.product == product
     assert order.quantity == 5
@@ -1044,10 +1044,10 @@ def test_order_initialization_with_insufficient_product_quantity() -> None:
     """
     Тест инициализации заказа с количеством, превышающим доступное количество товара.
     """
-    product = Product("Тестовый продукт", "Описание", 100.0, 5)
+    product = Product("Просто продукт", "Описание", 100.0, 5)
 
     with pytest.raises(ValueError, match=r"Недостаточно товара на складе\. Запрошено: 10, доступно: 5"):
-        Order("Тестовый заказ", "Описание заказа", product, 10)
+        Order("Просто заказ", "Описание заказа", product, 10)
 
 
 def test_order_initialization_logging() -> None:
@@ -1092,9 +1092,9 @@ def test_product_zero_quantity_error_validate_method_print_output(capsys):
     Тест вывода сообщений в методе validate.
     """
     # Тест успешной валидации
-    ProductZeroQuantityError.validate("Тестовый продукт", 5)
+    ProductZeroQuantityError.validate("Какая-то вкусняшка", 5)
     captured = capsys.readouterr()
-    assert "Товар 'Тестовый продукт' успешно прошел валидацию" in captured.out
+    assert "Товар 'Какая-то вкусняшка' успешно прошел валидацию" in captured.out
     assert "Обработка добавления товара завершена" in captured.out
 
 
@@ -1103,11 +1103,11 @@ def test_product_zero_quantity_error_validate_method_exception_handling():
     Тест обработки исключений в методе validate.
     """
     # Тест на корректность обработки исключений
-    with pytest.raises(ValueError, match="Количество товара 'Тестовый продукт' не может быть отрицательным"):
-        ProductZeroQuantityError.validate("Тестовый продукт", -1)
+    with pytest.raises(ValueError, match="Количество товара 'Орехи' не может быть отрицательным"):
+        ProductZeroQuantityError.validate("Орехи", -1)
 
-    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
-        ProductZeroQuantityError.validate("Тестовый продукт", 0)
+    with pytest.raises(ValueError, match="Товар 'Орехи' с нулевым количеством не может быть добавлен"):
+        ProductZeroQuantityError.validate("Орехи", 0)
 
 
 def test_product_zero_quantity_error_custom_message():
@@ -1146,7 +1146,7 @@ def test_product_zero_quantity_error_message_initialization():
     assert error1.message == "Товар с нулевым количеством не может быть добавлен"
 
     # Тест с пользовательским сообщением
-    custom_message = "Специальное сообщение об ошибке"
+    custom_message = "Это сообщение об ошибке"
     error2 = ProductZeroQuantityError(custom_message)
     assert str(error2) == custom_message
     assert error2.message == custom_message
@@ -1160,32 +1160,32 @@ def test_product_zero_quantity_error_inheritance():
 
     # Тест создания исключения и проверка, что оно работает как ValueError
     with pytest.raises(ProductZeroQuantityError) as excinfo:
-        raise ProductZeroQuantityError("Тестовое сообщение")
+        raise ProductZeroQuantityError("Просто сообщение об ошибке")
 
-    assert "Тестовое сообщение" in str(excinfo.value)
+    assert "Просто сообщение об ошибке" in str(excinfo.value)
 
 def test_product_zero_quantity_error_str_method():
     """
     Тест метода __str__ для исключения.
     """
     # Проверяем, что метод __str__ возвращает корректное сообщение
-    error = ProductZeroQuantityError("Особое сообщение об ошибке")
-    assert str(error) == "Особое сообщение об ошибке"
+    error = ProductZeroQuantityError("Странное сообщение об ошибке")
+    assert str(error) == "Странное сообщение об ошибке"
 
 def test_product_zero_quantity_error_validate_method():
     """
     Тест статического метода validate.
     """
     # Тест на успешную валидацию
-    assert ProductZeroQuantityError.validate("Тестовый продукт", 5) is True
+    assert ProductZeroQuantityError.validate("Макароны", 5) is True
 
     # Тест на ошибку с отрицательным количеством
-    with pytest.raises(ValueError, match="Количество товара 'Тестовый продукт' не может быть отрицательным"):
-        ProductZeroQuantityError.validate("Тестовый продукт", -1)
+    with pytest.raises(ValueError, match="Количество товара 'Макароны' не может быть отрицательным"):
+        ProductZeroQuantityError.validate("Макароны", -1)
 
     # Тест на ошибку с нулевым количеством
-    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
-        ProductZeroQuantityError.validate("Тестовый продукт", 0)
+    with pytest.raises(ValueError, match="Товар 'Макароны' с нулевым количеством не может быть добавлен"):
+        ProductZeroQuantityError.validate("Макароны", 0)
 
 # Тесты  тесты для метода middle_price()
 def test_category_middle_price_with_products():
@@ -1372,7 +1372,7 @@ def test_add_product_with_inherited_product_type():
     class CustomProduct(Product):
         pass
 
-    custom_product = CustomProduct("Кастомный продукт", "Описание", 100.0, 5)
+    custom_product = CustomProduct("Продукт с запахом", "Описание", 100.0, 5)
     category.add_product(custom_product)
 
     # Проверяем, что продукт добавлен в категорию
@@ -1486,9 +1486,9 @@ def test_product_initialization_with_zero_quantity_allowed():
     """
     Тест инициализации продукта с нулевым количеством при allow_zero=True.
     """
-    product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
+    product = Product("Вкусные котлетки с пюрешкой", "Описание", 100.0, 0, allow_zero=True)
 
-    assert product.name == "Тестовый продукт"
+    assert product.name == "Вкусные котлетки с пюрешкой"
     assert product.quantity == 0
     assert product.price == 100.0
 
@@ -1498,8 +1498,8 @@ def test_product_initialization_with_zero_quantity_default():
     """
     Тест инициализации продукта с нулевым количеством по умолчанию (allow_zero=False).
     """
-    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
-        Product("Тестовый продукт", "Описание", 100.0, 0)
+    with pytest.raises(ValueError, match="Товар 'Грибы из Питера' с нулевым количеством не может быть добавлен"):
+        Product("Грибы из Питера", "Описание", 100.0, 0)
 
 
 def test_product_initialization_logging_zero_quantity_not_allowed():
@@ -1508,7 +1508,7 @@ def test_product_initialization_logging_zero_quantity_not_allowed():
     """
     with patch("src.models.logger.info") as mock_logger_info:
         with pytest.raises(ValueError):
-            Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
+            Product("Соль Каспийская", "Описание", 100.0, 0, allow_zero=False)
 
         mock_logger_info.assert_not_called()
 
@@ -1550,12 +1550,11 @@ def test_base_product_price_property_raises_error_on_direct_instantiation():
 
 
 
-def test_base_product_price_property_type_hint():
+def test_base_product_price_property_type():
     """
-    Проверка type hint для свойства price.
+    Проверка типа возвращаемого значения для свойства price.
     """
-    # Проверяем, что price является абстрактным свойством с возвращаемым типом float
-    assert BaseProduct.price.fget.__annotations__['return'] == float
+    assert BaseProduct.price.fget.__annotations__.get('return') == float
 
 
 def test_base_product_price_property_requires_implementation():
@@ -1583,4 +1582,84 @@ def test_base_product_price_property_requires_implementation():
     # Должно проходить без исключений
     product = ImplementedProduct("Test", "Description", 100.0, 10)
     assert product.price == 100.0
+
+
+# тесты для метода __str__ класса Order
+def test_order_str_representation():
+    """
+    Проверка корректности строкового представления заказа.
+    """
+    # Создаем продукт
+    product = Product("Ноутбук", "Игровой ноутбук", 50000.0, 10)
+
+    # Создаем заказ
+    order = Order("Заказ №1", "Заказ из Зимбабве", product, 2)
+
+    # Формируем ожидаемую строку
+    expected_str = (
+        "Заказ: Заказ №1\n"
+        "Описание: Заказ из Зимбабве\n"
+        "Товар: Ноутбук\n"
+        "Количество: 2\n"
+        "Общая стоимость: 100000.0 руб."
+    )
+
+    # Проверяем строковое представление
+    assert str(order) == expected_str
+
+
+def test_order_total_cost_calculation():
+    """
+    Проверка корректности расчета общей стоимости заказа.
+    """
+    # Создаем продукт
+    product = Product("Смартфон", "Новый смартфон", 30000.0, 5)
+
+    # Создаем заказ
+    order = Order("Заказ №2", "Второй тестовый заказ", product, 3)
+
+    # Проверяем общую стоимость
+    assert order.total_cost == 90000.0
+
+
+def test_order_quantity_reduction():
+    """
+    Проверка уменьшения количества товара после создания заказа.
+    """
+    # Создаем продукт
+    product = Product("Планшет", "Графический планшет", 25000.0, 7)
+
+    # Запоминаем начальное количество
+    initial_quantity = product.quantity
+
+    # Создаем заказ
+    order = Order("Заказ №3", "Третий тестовый заказ", product, 4)
+
+    # Проверяем, что количество товара уменьшилось
+    assert product.quantity == initial_quantity - 4
+
+
+def test_order_invalid_quantity():
+    """
+    Проверка обработки некорректного количества товара.
+    """
+    # Создаем продукт
+    product = Product("Наушники", "Беспроводные наушники", 5000.0, 3)
+
+    # Проверяем, что создание заказа с нулевым количеством вызывает исключение
+    with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        Order("Заказ №4", "Некорректный заказ", product, 0)
+
+
+def test_order_insufficient_quantity():
+    """
+    Проверка обработки заказа с количеством товара больше, чем на складе.
+    """
+    # Создаем продукт
+    product = Product("Мышь", "Игровая мышь", 3000.0, 2)
+
+    # Проверяем, что создание заказа с количеством больше, чем на складе, вызывает исключение
+    with pytest.raises(ValueError, match="Недостаточно товара на складе"):
+        Order("Заказ №5", "Заказ с превышением количества", product, 3)
+
 
