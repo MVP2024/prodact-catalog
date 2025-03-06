@@ -1,12 +1,13 @@
-from src.models import Product, Category
+from src.models import Category, Product
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         product_invalid = Product("Бракованный товар", "Неверное количество", 1000.0, 0)
     except ValueError as e:
         print(
             f"Возникла ошибка ValueError прерывающая работу "
-            f"программы при попытке добавить продукт с нулевым количеством: {e}")
+            f"программы при попытке добавить продукт с нулевым количеством: {e}"
+        )
     else:
         print("Не возникла ошибка ValueError при попытке добавить продукт с нулевым количеством")
 

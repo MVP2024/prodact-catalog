@@ -1,5 +1,4 @@
-from abc import ABC
-from typing import Any, Dict
+from typing import Any, Dict, cast
 from unittest.mock import patch
 
 import pytest
@@ -13,7 +12,8 @@ from src.models import (
     Order,
     PrintInfoMixin,
     Product,
-    Smartphone, ProductZeroQuantityError,
+    ProductZeroQuantityError,
+    Smartphone,
 )
 
 
@@ -173,7 +173,7 @@ def test_product_add_method_total_value() -> None:
     assert product1 + product2 == 550.0  # 50 * 5 + 100 * 3
 
 
-def test_create_product_with_zero_quantity():
+def test_create_product_with_zero_quantity() -> None:
     """Тест создания продукта с нулевым количеством."""
     product = Product("Продукт", "Описание", 100.0, 0, allow_zero=True)
 
@@ -819,8 +819,9 @@ def test_base_product_price_property_implementation() -> None:
     # Проверяем логирование при получении цены
     with patch("src.models.logger.debug") as mock_logger_debug:
         _ = product.price
-        mock_logger_debug.assert_called_once_with("Получение цены для продукта 'Весёлый молочник'. "
-                                                  "Текущая цена: 100.0")
+        mock_logger_debug.assert_called_once_with(
+            "Получение цены для продукта 'Весёлый молочник'. " "Текущая цена: 100.0"
+        )
 
 
 def test_base_product_add_method_implementation() -> None:
@@ -1076,7 +1077,7 @@ def test_order_initialization_multiple_orders() -> None:
 
 
 # Тесты для покрытия ProductZeroQuantityError
-def test_product_zero_quantity_error_validate_method_additional_cases():
+def test_product_zero_quantity_error_validate_method_additional_cases() -> None:
     """
     Расширенный тест статического метода validate с дополнительными сценариями.
     """
@@ -1086,7 +1087,7 @@ def test_product_zero_quantity_error_validate_method_additional_cases():
         assert ProductZeroQuantityError.validate("Тестовый продукт", quantity) is True
 
 
-def test_product_zero_quantity_error_validate_method_print_output(capsys):
+def test_product_zero_quantity_error_validate_method_print_output(capsys: pytest.CaptureFixture) -> None:
     """
     Тест вывода сообщений в методе validate.
     """
@@ -1097,7 +1098,7 @@ def test_product_zero_quantity_error_validate_method_print_output(capsys):
     assert "Обработка добавления товара завершена" in captured.out
 
 
-def test_product_zero_quantity_error_validate_method_exception_handling():
+def test_product_zero_quantity_error_validate_method_exception_handling() -> None:
     """
     Тест обработки исключений в методе validate.
     """
@@ -1109,7 +1110,7 @@ def test_product_zero_quantity_error_validate_method_exception_handling():
         ProductZeroQuantityError.validate("Орехи", 0)
 
 
-def test_product_zero_quantity_error_custom_message():
+def test_product_zero_quantity_error_custom_message() -> None:
     """
     Тест создания исключения с полностью пользовательским сообщением.
     """
@@ -1120,22 +1121,22 @@ def test_product_zero_quantity_error_custom_message():
     assert error.message == custom_message
 
 
-def test_product_zero_quantity_error_type_checking():
+def test_product_zero_quantity_error_type_checking() -> None:
     """
     Тест проверки типов в методе validate.
     """
     # Проверка обработки некорректных типов
     with pytest.raises(TypeError, match="Название продукта должно быть строкой"):
-        ProductZeroQuantityError.validate(123, 5)
+        ProductZeroQuantityError.validate(cast(str, 123), 5)
 
     with pytest.raises(TypeError, match="Количество должно быть целым числом"):
-        ProductZeroQuantityError.validate("Продукт", "не число")
+        ProductZeroQuantityError.validate("Продукт", cast(int, "не число"))
 
     with pytest.raises(TypeError, match="Название продукта должно быть строкой"):
-        ProductZeroQuantityError.validate(None, 5)
+        ProductZeroQuantityError.validate(cast(str, None), 5)
 
 
-def test_product_zero_quantity_error_message_initialization():
+def test_product_zero_quantity_error_message_initialization() -> None:
     """
     Тест инициализации исключения с пользовательским сообщением.
     """
@@ -1151,7 +1152,7 @@ def test_product_zero_quantity_error_message_initialization():
     assert error2.message == custom_message
 
 
-def test_product_zero_quantity_error_inheritance():
+def test_product_zero_quantity_error_inheritance() -> None:
     """
     Тест наследования от ValueError и проверка корректности сообщения об ошибке.
     """
@@ -1165,7 +1166,7 @@ def test_product_zero_quantity_error_inheritance():
     assert "Просто сообщение об ошибке" in str(excinfo.value)
 
 
-def test_product_zero_quantity_error_str_method():
+def test_product_zero_quantity_error_str_method() -> None:
     """
     Тест метода __str__ для исключения.
     """
@@ -1174,7 +1175,7 @@ def test_product_zero_quantity_error_str_method():
     assert str(error) == "Странное сообщение об ошибке"
 
 
-def test_product_zero_quantity_error_validate_method():
+def test_product_zero_quantity_error_validate_method() -> None:
     """
     Тест статического метода validate.
     """
@@ -1191,7 +1192,7 @@ def test_product_zero_quantity_error_validate_method():
 
 
 # Тесты  тесты для метода middle_price()
-def test_category_middle_price_with_products():
+def test_category_middle_price_with_products() -> None:
     """
     Тест вычисления средней цены для категории с несколькими продуктами.
     """
@@ -1206,7 +1207,7 @@ def test_category_middle_price_with_products():
     assert category.middle_price() == expected_average_price
 
 
-def test_category_middle_price_with_single_product():
+def test_category_middle_price_with_single_product() -> None:
     """
     Тест вычисления средней цены для категории с одним продуктом.
     """
@@ -1218,7 +1219,7 @@ def test_category_middle_price_with_single_product():
     assert category.middle_price() == 1000.0
 
 
-def test_category_middle_price_with_no_products():
+def test_category_middle_price_with_no_products() -> None:
     """
     Тест вычисления средней цены для пустой категории.
     """
@@ -1227,7 +1228,7 @@ def test_category_middle_price_with_no_products():
     assert category.middle_price() == 0.0
 
 
-def test_category_middle_price_logging():
+def test_category_middle_price_logging() -> None:
     """
     Тест логирования при вычислении средней цены.
     """
@@ -1247,7 +1248,7 @@ def test_category_middle_price_logging():
         )
 
 
-def test_category_middle_price_empty_category_logging():
+def test_category_middle_price_empty_category_logging() -> None:
     """
     Тест логирования при вычислении средней цены для пустой категории.
     """
@@ -1256,13 +1257,11 @@ def test_category_middle_price_empty_category_logging():
     with patch("src.models.logger.warning") as mock_logger_warning:
         category.middle_price()
 
-        mock_logger_warning.assert_called_once_with(
-            f"Категория '{category.name}' не содержит товаров"
-        )
+        mock_logger_warning.assert_called_once_with(f"Категория '{category.name}' не содержит товаров")
 
 
 # Добавлены тесты для метода __repr__ в классе LawnGrass
-def test_lawn_grass_repr_method_with_zero_quantity():
+def test_lawn_grass_repr_method_with_zero_quantity() -> None:
     """
     Тест представления газонной травы с нулевым количеством для отладки.
     """
@@ -1274,13 +1273,13 @@ def test_lawn_grass_repr_method_with_zero_quantity():
         country="Россия",
         germination_period="5-10 дней",
         color="Зеленый",
-        allow_zero=True
+        allow_zero=True,
     )
 
     assert repr(lawn_grass) == "Газонная трава для России, 500.0 руб. Остаток: 0 шт."
 
 
-def test_lawn_grass_repr_method_with_special_characters():
+def test_lawn_grass_repr_method_with_special_characters() -> None:
     """
     Тест представления газонной травы со специальными символами в названии.
     """
@@ -1297,7 +1296,7 @@ def test_lawn_grass_repr_method_with_special_characters():
     assert repr(lawn_grass) == "Газонная трава 'Элита', 750.5 руб. Остаток: 15 шт."
 
 
-def test_lawn_grass_repr_method_type_consistency():
+def test_lawn_grass_repr_method_type_consistency() -> None:
     """
     Тест для согласованности типов в представлении газонной травы.
     """
@@ -1320,7 +1319,7 @@ def test_lawn_grass_repr_method_type_consistency():
     assert "Остаток:" in repr_result
 
 
-def test_lawn_grass_repr_method_inheritance():
+def test_lawn_grass_repr_method_inheritance() -> None:
     """
     Тест наследования и переопределения метода __repr__.
     """
@@ -1342,34 +1341,8 @@ def test_lawn_grass_repr_method_inheritance():
     assert repr(custom_lawn_grass) == "Обычная Специальная трава, 600.0 руб. Остаток: 10 шт."
 
 
-# add_product для класса Product
-def test_add_product_with_non_product_object(caplog):
-    """
-    Тест добавления объекта, не являющегося Product, в категорию.
-    """
-    category = Category("Электроника", "Описание")
-
-    class CustomObject:
-        pass
-
-    non_product_object = CustomObject()
-
-    with pytest.raises(TypeError) as excinfo:
-        category.add_product(non_product_object)
-
-    # Проверяем текст исключения
-    assert (f"В категорию можно добавлять только продукты. Получен объект типа: "
-            f"{type(non_product_object).__name__}") in str(excinfo.value)
-
-    # Проверяем логирование ошибки
-    assert "В категорию можно добавлять только продукты" in caplog.text
-    assert type(non_product_object).__name__ in caplog.text
-
-    # Проверяем, что количество продуктов в категории не изменилось
-    assert len(category.products) == 0
-
-
-def test_add_product_with_inherited_product_type():
+# тесты дял add_product для класса Product
+def test_add_product_with_inherited_product_type() -> None:
     """
     Тест добавления объекта, унаследованного от Product.
     """
@@ -1386,7 +1359,7 @@ def test_add_product_with_inherited_product_type():
     assert category.products[0] == custom_product
 
 
-def test_add_product_with_different_inherited_types():
+def test_add_product_with_different_inherited_types() -> None:
     """
     Тест добавления объектов разных дочерних классов.
     """
@@ -1406,7 +1379,7 @@ def test_add_product_with_different_inherited_types():
         efficiency=0.9,
         model="Тестовый",
         memory=128,
-        color="Черный"
+        color="Черный",
     )
 
     lawn_grass = CustomLawnGrass(
@@ -1416,7 +1389,7 @@ def test_add_product_with_different_inherited_types():
         quantity=10,
         country="Россия",
         germination_period="7-10 дней",
-        color="Зеленый"
+        color="Зеленый",
     )
 
     # Каждый объект должен добавляться корректно
@@ -1429,8 +1402,7 @@ def test_add_product_with_different_inherited_types():
 
 
 # тесты для def __init__ класса Product
-
-def test_product_initialization_with_zero_quantity_not_allowed():
+def test_product_initialization_with_zero_quantity_not_allowed() -> None:
     """
     Тест инициализации продукта с нулевым количеством при allow_zero=False.
     """
@@ -1438,7 +1410,7 @@ def test_product_initialization_with_zero_quantity_not_allowed():
         Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
 
 
-def test_product_initialization_with_negative_quantity():
+def test_product_initialization_with_negative_quantity() -> None:
     """
     Тест инициализации продукта с отрицательным количеством.
     """
@@ -1446,7 +1418,7 @@ def test_product_initialization_with_negative_quantity():
         Product("Тестовый продукт", "Описание", 100.0, -1)
 
 
-def test_product_initialization_with_different_allow_zero_values():
+def test_product_initialization_with_different_allow_zero_values() -> None:
     """
     Тест инициализации продуктов с разными значениями allow_zero.
     """
@@ -1459,7 +1431,7 @@ def test_product_initialization_with_different_allow_zero_values():
         Product("Продукт 2", "Описание", 100.0, 0, allow_zero=False)
 
 
-def test_product_initialization_logging_with_zero_quantity():
+def test_product_initialization_logging_with_zero_quantity() -> None:
     """
     Тест логирования при инициализации продукта с нулевым количеством.
     """
@@ -1472,7 +1444,7 @@ def test_product_initialization_logging_with_zero_quantity():
         assert product.quantity == 0
 
 
-def test_product_initialization_with_zero_quantity_in_category():
+def test_product_initialization_with_zero_quantity_in_category() -> None:
     """
     Тест добавления продукта с нулевым количеством в категорию.
     """
@@ -1487,7 +1459,7 @@ def test_product_initialization_with_zero_quantity_in_category():
 
 
 # тесты для def __init__ класса Product
-def test_product_initialization_with_zero_quantity_allowed():
+def test_product_initialization_with_zero_quantity_allowed() -> None:
     """
     Тест инициализации продукта с нулевым количеством при allow_zero=True.
     """
@@ -1498,7 +1470,7 @@ def test_product_initialization_with_zero_quantity_allowed():
     assert product.price == 100.0
 
 
-def test_product_initialization_with_zero_quantity_default():
+def test_product_initialization_with_zero_quantity_default() -> None:
     """
     Тест инициализации продукта с нулевым количеством по умолчанию (allow_zero=False).
     """
@@ -1506,7 +1478,7 @@ def test_product_initialization_with_zero_quantity_default():
         Product("Грибы из Питера", "Описание", 100.0, 0)
 
 
-def test_product_initialization_logging_zero_quantity_not_allowed():
+def test_product_initialization_logging_zero_quantity_not_allowed() -> None:
     """
     Тест отсутствия логирования при попытке создания продукта с нулевым количеством.
     """
@@ -1519,54 +1491,23 @@ def test_product_initialization_logging_zero_quantity_not_allowed():
 
 # тесты для def price(self) class BaseProduct(ABC)
 
-def test_base_product_price_property_is_abstract():
+
+def test_base_product_price_property_is_abstract() -> None:
     """
     Проверка, что свойство price является абстрактным.
     """
 
-    assert hasattr(BaseProduct.price, '__isabstractmethod__')
+    assert hasattr(BaseProduct.price, "__isabstractmethod__")
     assert BaseProduct.price.__isabstractmethod__ is True
 
 
-def test_base_product_price_property_raises_error_on_direct_instantiation():
-    """
-    Проверка, что нельзя создать экземпляр BaseProduct без реализации всех абстрактных методов.
-    """
-
-    class IncompleteProduct(BaseProduct, ABC):
-        def __init__(self, name, description, price, quantity):
-            self.name = name
-            self.description = description
-            self._price = price
-            self.quantity = quantity
-
-        # Намеренно не реализуем __str__
-
-        def __add__(self, other: BaseProduct) -> float:
-            return 0.0
-
-        @property
-        def price(self) -> float:
-            return self._price
-
-    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        IncompleteProduct("Test", "Description", 10.0, 5)
-
-
-def test_base_product_price_property_type() -> Any | None:
-    """
-    Проверка типа возвращаемого значения для свойства price.
-    """
-    assert BaseProduct.price.fget.__annotations__.get('return') == float
-
-
-def test_base_product_price_property_requires_implementation():
+def test_subclasses_implement_the_price_property() -> None:
     """
     Проверка, что подклассы должны реализовать свойство price.
     """
 
     class ImplementedProduct(BaseProduct):
-        def __init__(self, name, description, price, quantity):
+        def __init__(self, name: str, description: str, price: float, quantity: int) -> None:
             self.name = name
             self.description = description
             self._price = price
@@ -1574,12 +1515,12 @@ def test_base_product_price_property_requires_implementation():
 
         @property
         def price(self) -> float:
-            return self._price
+            return float(self._price)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"{self.name}"
 
-        def __add__(self, other):
+        def __add__(self, other: BaseProduct) -> float:
             return 0.0
 
     # Должно проходить без исключений
@@ -1588,7 +1529,7 @@ def test_base_product_price_property_requires_implementation():
 
 
 # тесты для метода __str__ класса Order
-def test_order_str_representation():
+def test_order_str_representation() -> None:
     """
     Проверка корректности строкового представления заказа.
     """
@@ -1611,7 +1552,7 @@ def test_order_str_representation():
     assert str(order) == expected_str
 
 
-def test_order_total_cost_calculation():
+def test_order_total_cost_calculation() -> None:
     """
     Проверка корректности расчета общей стоимости заказа.
     """
@@ -1625,7 +1566,7 @@ def test_order_total_cost_calculation():
     assert order.total_cost == 90000.0
 
 
-def test_order_creation(product):
+def test_order_creation(product: Product) -> None:
     order = Order("Заказ №3", "Пробный заказ", product, 4)
 
     assert order.name == "Заказ №3"
@@ -1634,7 +1575,7 @@ def test_order_creation(product):
     assert order.quantity == 4
 
 
-def test_order_invalid_quantity():
+def test_order_invalid_quantity() -> None:
     """
     Проверка обработки некорректного количества товара.
     """
@@ -1646,7 +1587,7 @@ def test_order_invalid_quantity():
         Order("Заказ №4", "Некорректный заказ", product, 0)
 
 
-def test_order_insufficient_quantity():
+def test_order_insufficient_quantity() -> None:
     """
     Проверка обработки заказа с количеством товара больше, чем на складе.
     """

@@ -15,11 +15,11 @@ class ProductZeroQuantityError(ValueError):
         self.message = message
         super().__init__(message)  # Важно передать message в родительский класс ValueError
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
     @classmethod
-    def validate(cls, name: str, quantity: int):
+    def validate(cls, name: str, quantity: int) -> bool:
         """
         Статический метод для валидации количества продукта.
 
@@ -417,7 +417,7 @@ class Product(BaseProduct):
             quantity=(
                 int(product_dict.get("quantity", 0)) if isinstance(product_dict.get("quantity"), (int, float)) else 0
             ),
-            allow_zero=True
+            allow_zero=True,
         )
 
     @classmethod
@@ -774,7 +774,7 @@ class LawnGrass(PrintInfoMixin, Product):
         country: str,
         germination_period: str,
         color: str,
-        allow_zero: bool = False  # Добавляем параметр по умолчанию
+        allow_zero: bool = False,  # Добавляем параметр по умолчанию
     ):
         """
         Инициализирует газонную траву с дополнительными характеристиками.
