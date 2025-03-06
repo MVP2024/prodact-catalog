@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Any, Dict
 from unittest.mock import patch
 
@@ -624,8 +625,8 @@ def test_lawn_grass_add_method_different_types() -> None:
         color="Зеленый",
     )
     custom_lawn_grass = CustomLawnGrass(
-        name="Рандомная трава",
-        description="Рандомная трава",
+        name="Инопланетная трава",
+        description="Инопланетная трава",
         price=400.0,
         quantity=7,
         country="Россия",
@@ -1277,7 +1278,7 @@ def test_lawn_grass_repr_method_with_zero_quantity():
 
 def test_lawn_grass_repr_method_with_special_characters():
     """
-    Тест представления газонной травы с специальными символами в названии.
+    Тест представления газонной травы со специальными символами в названии.
     """
     lawn_grass = LawnGrass(
         name="Газонная трава 'Элита'",
@@ -1421,15 +1422,6 @@ def test_add_product_with_different_inherited_types():
 
 
 # тесты для def __init__ класса Product
-def test_product_initialization_with_zero_quantity_allowed():
-    """
-    Тест инициализации продукта с нулевым количеством при allow_zero=True.
-    """
-    product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
-
-    assert product.name == "Тестовый продукт"
-    assert product.quantity == 0
-
 
 def test_product_initialization_with_zero_quantity_not_allowed():
     """
@@ -1438,13 +1430,6 @@ def test_product_initialization_with_zero_quantity_not_allowed():
     with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
         Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
 
-
-def test_product_initialization_with_zero_quantity_default():
-    """
-    Тест инициализации продукта с нулевым количеством по умолчанию (allow_zero=False).
-    """
-    with pytest.raises(ValueError, match="Товар 'Тестовый продукт' с нулевым количеством не может быть добавлен"):
-        Product("Тестовый продукт", "Описание", 100.0, 0)
 
 
 def test_product_initialization_with_negative_quantity():
@@ -1476,6 +1461,10 @@ def test_product_initialization_logging_with_zero_quantity():
         product = Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=True)
 
         mock_logger_info.assert_called_once_with("Создан продукт: Тестовый продукт")
+
+        assert product.name == "Тестовый продукт"
+        assert product.quantity == 0
+
 
 
 def test_product_initialization_with_zero_quantity_in_category():
@@ -1513,16 +1502,6 @@ def test_product_initialization_with_zero_quantity_default():
         Product("Тестовый продукт", "Описание", 100.0, 0)
 
 
-def test_product_initialization_logging_without_zero_quantity():
-    """
-    Тест логирования при инициализации продукта с ненулевым количеством.
-    """
-    with patch("src.models.logger.info") as mock_logger_info:
-        product = Product("Тестовый продукт", "Описание", 100.0, 5)
-
-        mock_logger_info.assert_called_once_with("Создан продукт: Тестовый продукт")
-
-
 def test_product_initialization_logging_zero_quantity_not_allowed():
     """
     Тест отсутствия логирования при попытке создания продукта с нулевым количеством.
@@ -1532,3 +1511,76 @@ def test_product_initialization_logging_zero_quantity_not_allowed():
             Product("Тестовый продукт", "Описание", 100.0, 0, allow_zero=False)
 
         mock_logger_info.assert_not_called()
+
+
+# тесты для def price(self) class BaseProduct(ABC)
+
+def test_base_product_price_property_is_abstract():
+    """
+    Проверка, что свойство price является абстрактным.
+    """
+
+    assert hasattr(BaseProduct.price, '__isabstractmethod__')
+    assert BaseProduct.price.__isabstractmethod__ is True
+
+
+def test_base_product_price_property_raises_error_on_direct_instantiation():
+    """
+    Проверка, что нельзя создать экземпляр BaseProduct без реализации всех абстрактных методов.
+    """
+
+    class IncompleteProduct(BaseProduct, ABC):
+        def __init__(self, name, description, price, quantity):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        # Намеренно не реализуем __str__
+
+        def __add__(self, other: BaseProduct) -> float:
+            return 0.0
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        IncompleteProduct("Test", "Description", 10.0, 5)
+
+
+
+def test_base_product_price_property_type_hint():
+    """
+    Проверка type hint для свойства price.
+    """
+    # Проверяем, что price является абстрактным свойством с возвращаемым типом float
+    assert BaseProduct.price.fget.__annotations__['return'] == float
+
+
+def test_base_product_price_property_requires_implementation():
+    """
+    Проверка, что подклассы должны реализовать свойство price.
+    """
+
+    class ImplementedProduct(BaseProduct):
+        def __init__(self, name, description, price, quantity):
+            self.name = name
+            self.description = description
+            self._price = price
+            self.quantity = quantity
+
+        @property
+        def price(self) -> float:
+            return self._price
+
+        def __str__(self):
+            return f"{self.name}"
+
+        def __add__(self, other):
+            return 0.0
+
+    # Должно проходить без исключений
+    product = ImplementedProduct("Test", "Description", 100.0, 10)
+    assert product.price == 100.0
+
