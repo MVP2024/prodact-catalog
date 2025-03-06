@@ -331,7 +331,6 @@ class Product(BaseProduct):
         # Если все проверки пройдены, устанавливаем новую цену
         self._price = value
         logger.info(f"Цена обновлена до {value}")
-        logger.info(f"Цена обновлена до {value}")
 
     # Магические методы представления
     def __str__(self) -> str:
