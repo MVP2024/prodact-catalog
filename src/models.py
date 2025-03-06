@@ -2,6 +2,61 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
+
+class ProductZeroQuantityError(ValueError):
+    """
+    Пользовательское исключение для товаров с нулевым количеством.
+
+    Attrs:
+        message (str): Сообщение об ошибке.
+    """
+
+    def __init__(self, message: str = "Товар с нулевым количеством не может быть добавлен"):
+        self.message = message
+        super().__init__(message)  # Важно передать message в родительский класс ValueError
+
+    def __str__(self) -> str:
+        return self.message
+
+    @classmethod
+    def validate(cls, name: str, quantity: int) -> bool:
+        """
+        Статический метод для валидации количества продукта.
+
+        Args:
+            name (str): Название продукта.
+            quantity (int): Количество продукта.
+
+        Raises:
+            TypeError: Если переданы некорректные типы.
+            ValueError: Если количество товара некорректное.
+        """
+        # Проверка типов входных данных
+        if not isinstance(name, str):
+            raise TypeError(f"Название продукта должно быть строкой, получено: {type(name)}")
+
+        if not isinstance(quantity, int):
+            raise TypeError(f"Количество должно быть целым числом, получено: {type(quantity)}")
+
+        try:
+            if quantity < 0:
+                raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
+
+            if quantity == 0:
+                raise ValueError(f"Товар '{name}' с нулевым количеством не может быть добавлен")
+
+            else:
+                print(f"Товар '{name}' успешно прошел валидацию")
+            return True
+
+        except ProductZeroQuantityError as e:
+            print(f"Предупреждение: {e.message}")
+            return False
+
+        finally:
+            print("Обработка добавления товара завершена")
+
+
 # Добавляем настройку логгера
 logger = logging.getLogger(__name__)
 
@@ -209,7 +264,7 @@ class PrintInfoMixin:
 class Product(BaseProduct):
     """Класс, представляющий продукт."""
 
-    def __init__(self, name: str, description: str, price: float, quantity: int):
+    def __init__(self, name: str, description: str, price: float, quantity: int, allow_zero: bool = False):
         """
         Инициализирует продукт с заданными атрибутами.
 
@@ -218,7 +273,18 @@ class Product(BaseProduct):
             description (str): Описание продукта.
             price (float): Цена продукта.
             quantity (int): Количество продукта в наличии.
+            allow_zero (bool, optional): Разрешить нулевое количество. По умолчанию False.
+
+        Raises:
+            ValueError: Если количество товара равно нулю и allow_zero=False.
         """
+
+        if quantity < 0:
+            raise ValueError(f"Количество товара '{name}' не может быть отрицательным")
+
+        if quantity == 0 and not allow_zero:
+            raise ValueError(f"Товар '{name}' с нулевым количеством не может быть добавлен")
+
         self.name = name
         self.description = description
         self._price = price
@@ -264,7 +330,6 @@ class Product(BaseProduct):
 
         # Если все проверки пройдены, устанавливаем новую цену
         self._price = value
-        logger.info(f"Цена обновлена до {value}")
         logger.info(f"Цена обновлена до {value}")
 
     # Магические методы представления
@@ -351,6 +416,7 @@ class Product(BaseProduct):
             quantity=(
                 int(product_dict.get("quantity", 0)) if isinstance(product_dict.get("quantity"), (int, float)) else 0
             ),
+            allow_zero=True,
         )
 
     @classmethod
@@ -478,31 +544,23 @@ class Category(BaseContainer):
 
     # Методы работы с продуктами
     def add_product(self, product: Optional[Union[Product, str]] = None) -> None:
-        # Проверка на None
         if product is None:
             error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}'"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        # Если передана строка, можно добавить дополнительную логику
         if isinstance(product, str):
             logger.warning(f"Попытка добавить строку вместо продукта: {product}")
             return
 
-        # Проверка на тип Product
         if not isinstance(product, Product):
             error_msg = f"В категорию можно добавлять только продукты. Получен объект типа: {type(product).__name__}"
             logger.error(error_msg)
             raise TypeError(error_msg)
 
-        try:
-            self._products.append(product)
-            Category._product_count += 1  # Увеличиваем счетчик продуктов
-            logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
-        except Exception as e:
-            error_msg = f"Ошибка при добавлении продукта в категорию '{self.name}': {e}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        self._products.append(product)
+        Category._product_count += 1
+        logger.info(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
 
     # Магические методы
     def __iter__(self) -> "CategoryIterator":
@@ -534,6 +592,28 @@ class Category(BaseContainer):
         )
 
         return result
+
+    def middle_price(self) -> float:
+        """
+        Вычисляет средний ценник всех товаров в категории.
+
+        :return:
+            Float: Средняя цена товаров в категории или же равна 0, если товаров нет.
+        """
+        try:
+            # Вычисляем сумму цен всех товаров
+            total_price = sum(product.price for product in self._products)
+
+            # Делим сумму цен на количество товаров
+            average_price = total_price / len(self._products)
+
+            logger.info(f"Вычислена средняя цена для категории '{self.name}': {average_price}")
+
+            return average_price
+        except ZeroDivisionError:
+            # Обработка случая, когда в категории нет товаров
+            logger.warning(f"Категория '{self.name}' не содержит товаров")
+            return 0.0
 
     # Свойства
     @property
@@ -693,6 +773,7 @@ class LawnGrass(PrintInfoMixin, Product):
         country: str,
         germination_period: str,
         color: str,
+        allow_zero: bool = False,  # Добавляем параметр по умолчанию
     ):
         """
         Инициализирует газонную траву с дополнительными характеристиками.
@@ -704,8 +785,9 @@ class LawnGrass(PrintInfoMixin, Product):
             country (str): Страна-производитель.
             germination_period (str): Срок прорастания.
             color (str): Цвет травы.
+            allow_zero (bool, optional): Разрешить нулевое количество. По умолчанию False.
         """
-        super().__init__(name, description, price, quantity)
+        super().__init__(name, description, price, quantity, allow_zero)
         self.country = country
         self.germination_period = germination_period
         self.color = color
